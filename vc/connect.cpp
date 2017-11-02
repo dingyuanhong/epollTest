@@ -1,12 +1,29 @@
 
 #include <WinSock2.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "log.h"
 #include "connect_core.h"
 #pragma comment(lib,"ws2_32.lib")
 
-int main()
+int main(int argc, char* argv[])
 {
+	if(argc < 3)
+	{
+		printf("command: ip port.\n");
+		return 0;
+	}
+	char * ip = argv[1];
+	int port = atoi(argv[2]);
+	if (port <= 0) {
+		printf("¶Ë¿Ú´íÎó:%d",port);
+		return 0;
+	}
+
+	printf("ip:%s\n",ip);
+	printf("port:%d\n",port);
+
 	WORD wVersionRequired = 2;
 	WSADATA wsaData = {0};
 	wsaData.wVersion = 2;
@@ -19,7 +36,7 @@ int main()
 		VLOGE("socket error(%d)",errno);
 		return -1;
 	}
-	struct sockaddr *addr = createSocketAddr("10.0.2.4",9999);
+	struct sockaddr *addr = createSocketAddr(ip, port);
 	VASSERTL("createSocketAddr:",addr != NULL);
 
 	nonBlocking(sock);
