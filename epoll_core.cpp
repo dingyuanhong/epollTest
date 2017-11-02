@@ -334,3 +334,13 @@ int epoll_event_process(struct epoll_core ** core_ptr,struct config_core * confi
 	free(events_ptr);
 	return 0;
 }
+
+int epoll_event_add(struct epoll_core * core,struct interface_core * connect)
+{
+	epoll_event event = {0};
+	event.events = EPOLLIN;
+	// event.events = EPOLLIN | EPOLLET;
+	event.data.ptr = (void*)connect;
+	int ret = epoll_ctl(core->epoll,EPOLL_CTL_ADD,connect->fd,&event);
+	return ret;
+}

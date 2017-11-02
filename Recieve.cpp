@@ -44,11 +44,7 @@ int main()
 	connect->type |= INTERFACE_TYPE_SERVER;
 	connect->fd = server;
 
-	epoll_event event = {0};
-	event.events = EPOLLIN;
-	// event.events = EPOLLIN | EPOLLET;
-	event.data.ptr = (void*)connect;
-	int ret = epoll_ctl(epoll_core->epoll,EPOLL_CTL_ADD,connect->fd,&event);
+	int ret = epoll_event_add(epoll_core,connect);
 	if(ret != -1)
 	{
 		VLOGI("epoll server success(socket:%d %p)",connect->fd,process);

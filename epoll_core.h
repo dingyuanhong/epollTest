@@ -16,4 +16,6 @@ void * epoll_event_process(void*);
 
 int epoll_event_process(struct epoll_core ** core_ptr,struct config_core * config);
 
+int epoll_event_add(struct epoll_core * core,struct interface_core * connect);
+
 #endif
