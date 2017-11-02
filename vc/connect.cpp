@@ -1,5 +1,5 @@
-#include <Windows.h>
-//#include <WinSock2.h>
+
+#include <WinSock2.h>
 
 #include "log.h"
 #include "connect_core.h"
@@ -19,17 +19,56 @@ int main()
 		VLOGE("socket error(%d)",errno);
 		return -1;
 	}
-	struct sockaddr *addr = createSocketAddr("127.0.0.1",9999);
+	struct sockaddr *addr = createSocketAddr("10.0.2.4",9999);
 	VASSERTL("createSocketAddr:",addr != NULL);
+
+	nonBlocking(sock);
+
 	int ret = connect(sock,addr, GetSockaddrSize(addr));
 	VASSERTL("connect:",ret != -1);
+	if (ret == -1)
+	{
+		fd_set set;
+		FD_ZERO(&set);
+		FD_SET(sock,&set);
+		//select 检测超时2s
+		struct timeval tm;
+		tm.tv_sec = 2;
+		tm.tv_usec = 0;
+
+		if (select(-1, NULL, &set, NULL, &tm) <= 0)
+		{
+			// select错误或者超时
+			VLOGE("select error(%d)", errno);
+			closesocket(sock);
+			free(addr);
+			return -1;
+		}
+		else
+		{
+			int error = -1;
+			int optLen = sizeof(int);
+			getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&error, &optLen);
+
+			if (0 != error)
+			{
+				VLOGE("getsockopt error(%d)", error);
+				closesocket(sock);
+				free(addr);
+				return -1;
+			}
+		}
+	}
+	//阻塞socket
+	int blockMode = 0;
+	ioctlsocket(sock, FIONBIO, (u_long FAR*)&blockMode); //设置为阻塞模式 
 
 	while (true) {
 		char buffer[65535];
 		ret = send(sock,buffer,65535,0);
 		if (ret == SOCKET_ERROR)
 		{
-			VLOGE("send error(%d)",ret);
+			VLOGE("send error(%d)(%d)",ret,errno);
 			break;
 		}
 		else if (ret == 65535)
@@ -43,7 +82,10 @@ int main()
 	}
 
 	VLOGI("socket colse.");
+	shutdown(sock, SD_BOTH);
+
 	closesocket(sock);
+	free(addr);
 
 	WSACleanup();
 	VLOGI("process colse ok.");
