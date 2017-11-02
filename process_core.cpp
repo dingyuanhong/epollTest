@@ -3,7 +3,9 @@
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <sched.h>
+#include <sys/sysinfo.h>
+#include <pthread.h>
 #include "log.h"
 
 static void handle_signal_term(int sig)
@@ -17,6 +19,29 @@ void processSignal(){
 	signal(SIGTERM , handle_signal_term);
 	signal(SIGINT , handle_signal_term);
 	signal(SIGQUIT , handle_signal_term);
+}
+
+//进程绑定cpu
+void processBindCPU(int cpuid)
+{
+	cpu_set_t mask;
+	CPU_ZERO(&mask);
+    CPU_SET(cpuid, &mask);
+    if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
+        VLOGE("sched_setaffinity error(%d)",errno);
+    }
+}
+
+//线程绑定cpu
+void threadBindCPU(int cpuid)
+{
+	cpu_set_t mask;
+	CPU_ZERO(&mask);
+	CPU_SET(cpuid, &mask);
+
+	if (pthread_setaffinity_np(pthread_self(), sizeof(mask),&mask) < 0) {
+		VLOGE("pthread_setaffinity_np error(%d)",errno);
+	}
 }
 
 static struct process_core static_core;

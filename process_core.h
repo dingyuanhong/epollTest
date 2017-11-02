@@ -15,6 +15,11 @@ struct process_core
 
 void processSignal();
 
+//进程绑定cpu
+void processBindCPU(int cpuid);
+//线程绑定cpu
+void threadBindCPU(int cpuid);
+
 struct process_core * processGetDefault();
 
 void processInit(struct process_core * core);

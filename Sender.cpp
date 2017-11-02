@@ -18,7 +18,7 @@ int main()
 
 	struct process_core * process = processGetDefault();
 	processSignal();
-	int index = 0;
+	// int index = 0;
 	while(!process->signal_term_stop)
 	{
 		char buffer[65535];
