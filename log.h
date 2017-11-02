@@ -5,15 +5,14 @@
 
 #define VLOG_VERBOSE 0x1  //
 #define VLOG_DEBUG 0x2	//调试
-#define VLOG_INFO 0x4 //信息
+#define VLOG_INFO 0x4	//信息
 #define VLOG_NOTICE 0x8 //通知
-#define VLOG_WARN 0x10 //警告
-#define VLOG_ALERT 0x20 //警报
-#define VLOG_ERROR 0x40 //错误
+#define VLOG_WARN 0x10	//警告
+#define VLOG_ALERT 0x20  //警报
+#define VLOG_ERROR 0x40  //错误
 #define VLOG_ASSERT 0x80 //断言
-#define VLOG_EMERG 0x100 //紧急
-//#define VLOG_CRIT 0x200 //非常严重
-#define VLOG_CRIT 0x400 //非常严重
+#define VLOG_EMERG 0x100 //紧急 
+#define VLOG_CRIT 0x200	//非常严重
 
 void VVprintf(const char * file,const char * func,int line,int level,const char* format,...);
 void VVprintf(int level,const char* format,...);
