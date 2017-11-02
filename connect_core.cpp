@@ -1,18 +1,38 @@
+#include <errno.h>
+#include <stdlib.h>
+#ifdef WIN32
+#include <WinSock2.h>
+//#include <Ws2def.h>
+#include <Ws2ipdef.h>
+#define sa_family_t ADDRESS_FAMILY
+#define ssize_t int
+#define MSG_DONTWAIT 0
+#define close closesocket
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <errno.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <sys/epoll.h>
 #include <fcntl.h>
+#endif
 
 #include "log.h"
 #include "connect_core.h"
-#include "epoll_core.h"
 
-struct sockaddr *createSocket(const char * ip,int port)
+void nonBlocking(SOCKET socket)
+{
+#ifdef WIN32
+	unsigned long flags = 1;
+	ioctlsocket(socket, FIONBIO, &flags);
+#else
+	int flags = fcntl(socket, F_GETFL, 0);
+	fcntl(socket, F_SETFL, flags | O_NONBLOCK);
+#endif
+}
+
+struct sockaddr *createSocketAddr(const char * ip,int port)
 {
 	struct sockaddr_in * addr = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
 	addr->sin_family = AF_INET;
@@ -21,26 +41,31 @@ struct sockaddr *createSocket(const char * ip,int port)
 	return (struct sockaddr *)addr;
 }
 
-int GetSockaddrSize(struct sockaddr *sockaddr)
+int GetSockaddrSize(const struct sockaddr *sockaddr)
 {
 	if(sockaddr == NULL) return 0;
 	sa_family_t family = sockaddr->sa_family;
 	if(family == AF_INET){
 		return sizeof(struct sockaddr_in);
-	}else if(family == AF_UNIX)
-	{
-		return sizeof(struct sockaddr_un);
-	}else if(family == AF_INET6)
+	}
+	else if (family == AF_INET6)
 	{
 		return sizeof(struct sockaddr_in6);
-	}else {
+	}
+#ifndef WIN32
+	else if(family == AF_UNIX)
+	{
+		return sizeof(struct sockaddr_un);
+	}
+#endif
+	else {
 		return 0;
 	}
 }
 
-int createServerConnect(struct config_core *config)
+SOCKET createServerConnect(const sockaddr* socket_ptr,int max_listen)
 {
-	int server = socket(AF_INET,SOCK_STREAM,0);
+	SOCKET server = socket(AF_INET,SOCK_STREAM,0);
 	if(server == -1)
 	{
 		VLOGE("socket create error(%d)\n",errno);
@@ -48,7 +73,7 @@ int createServerConnect(struct config_core *config)
 	}
 	nonBlocking(server);
 
-	int ret = bind(server,config->socket_ptr,GetSockaddrSize(config->socket_ptr));
+	int ret = bind(server, socket_ptr,GetSockaddrSize(socket_ptr));
 	if(ret == -1)
 	{
 		VLOGE("socket bind error(%d)\n",errno);
@@ -56,7 +81,7 @@ int createServerConnect(struct config_core *config)
 		return -1;
 	}
 
-	ret = listen(server,config->max_listen);
+	ret = listen(server,max_listen);
 	if(ret == -1)
 	{
 		VLOGE("socket listen error(%d)\n",errno);

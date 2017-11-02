@@ -1,8 +1,10 @@
-#include "config.h"
+#include <stdlib.h>
+#ifndef WIN32
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <stdlib.h>
+#endif
 
+#include "config.h"
 #include "log.h"
 #include "connect_core.h"
 
@@ -37,7 +39,7 @@ void configInit(config_core * config)
 		free(config->socket_ptr);
 		config->socket_ptr = NULL;
 	}
-	config->socket_ptr = createSocket("0.0.0.0",9999);
+	config->socket_ptr = createSocketAddr("0.0.0.0",9999);
 
 	config->timeout = 200;
 	config->concurrent = 1024;
@@ -66,11 +68,14 @@ void configDump(config_core* config)
 		const char *ip_ptr = inet_ntop(AF_INET6, (void *)&addr->sin6_addr, ip, 128);
 		VLOGI("IP地址:%s",ip_ptr);
 		VLOGI("IP端口:%lld",ntohs(addr->sin6_port));
-	}else if(family == AF_UNIX)
+	}
+#ifndef WIN32
+	else if(family == AF_UNIX)
 	{
 		struct sockaddr_un * addr = (struct sockaddr_un*)config->socket_ptr;
 		VLOGI("UNIX地址:%s",addr->sun_path);
 	}
+#endif
 }
 
 void configClear(config_core * config)

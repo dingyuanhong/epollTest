@@ -1,19 +1,23 @@
 #ifndef CONNECT_H
 #define CONNECT_H
 
+#ifndef WIN32
 #include <netinet/in.h>
-#include "config.h"
+#define SOCKET int
+#endif
+
+void nonBlocking(SOCKET socket);
 
 struct interface_core
 {
 	int type;
-	int fd;
+	SOCKET fd;
 };
 
 struct connect_core
 {
 	int type;
-	int fd;
+	SOCKET fd;
 	int status;
 	int error;
 };
@@ -29,10 +33,10 @@ void interfaceFree(struct interface_core ** connect_ptr);
 #define CONNECT_STATUS_CONTINUE 0x8
 
 
-struct sockaddr *createSocket(const char * ip,int port);
-int GetSockaddrSize(struct sockaddr *sockaddr);
+struct sockaddr *createSocketAddr(const char * ip,int port);
+int GetSockaddrSize(const struct sockaddr *sockaddr);
 
-int createServerConnect(struct config_core *config);
+SOCKET createServerConnect(const sockaddr* socket_ptr,int max_listen);
 
 struct connect_core * connectCreate();
 void connectInit(struct connect_core * connect);

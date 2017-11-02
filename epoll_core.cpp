@@ -49,12 +49,6 @@ void * epoll_event_process(void* param)
 	return (void*)ret;
 }
 
-void nonBlocking(int socket)
-{
-	int flags = fcntl(socket, F_GETFL, 0);
-	fcntl(socket, F_SETFL, flags | O_NONBLOCK);
-}
-
 static const char * getEventName(int events)
 {
 	if(events & EPOLLIN)
