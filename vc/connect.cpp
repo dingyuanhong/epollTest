@@ -20,9 +20,10 @@ int main()
 		return -1;
 	}
 	struct sockaddr *addr = createSocketAddr("127.0.0.1",9999);
-	VASSERTA("createSocketAddr:",addr != NULL);
+	VASSERTL("createSocketAddr:",addr != NULL);
 	int ret = connect(sock,addr, GetSockaddrSize(addr));
-	VASSERTA("connect:",ret != -1);
+	VASSERTL("connect:",ret != -1);
+
 	while (true) {
 		char buffer[65535];
 		ret = send(sock,buffer,65535,0);

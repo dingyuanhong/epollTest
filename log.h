@@ -34,6 +34,7 @@ int VLOG_GetLevel();
 #define VALERT(A,...) VLOG(VLOG_ALERT,A,##__VA_ARGS__)
 
 #define VASSERT(_exp) if((!(_exp))) VLOG(VLOG_ASSERT, #_exp);
-#define VASSERTA(A,_exp) if((!(_exp))) VLOG(VLOG_ASSERT, A #_exp);
-#define VASSERTL(_exp,A) if((!(_exp))) VLOG(VLOG_ASSERT, A #_exp);
+#define VASSERTL(A,_exp) if((!(_exp))) VLOG(VLOG_ASSERT, A #_exp);
+#define VASSERTR(_exp,A) if((!(_exp))) VLOG(VLOG_ASSERT, A #_exp);
+
 #endif
