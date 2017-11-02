@@ -12,7 +12,8 @@
 #define VLOG_ERROR 0x40 //错误
 #define VLOG_ASSERT 0x80 //断言
 #define VLOG_EMERG 0x100 //紧急
-#define VLOG_CRIT 0x200 //非常严重
+//#define VLOG_CRIT 0x200 //非常严重
+#define VLOG_CRIT 0x400 //非常严重
 
 void VVprintf(const char * file,const char * func,int line,int level,const char* format,...);
 void VVprintf(int level,const char* format,...);
@@ -28,8 +29,8 @@ int VLOG_GetLevel();
 #define VLOGW(A,...) VLOG(VLOG_WARN,A,##__VA_ARGS__)
 #define VLOGN(A,...) VLOG(VLOG_NOTICE,A,##__VA_ARGS__)
 #define VLOGE(A,...) VLOG(VLOG_ERROR,A,##__VA_ARGS__)
-#define VLOGA(A,...) VLOG(VLOG_ASSERTA,##__VA_ARGS__)
-#define VLOGC(A,...) VLOG(VLOG_CRIT,##__VA_ARGS__)
+#define VLOGA(A,...) VLOG(VLOG_ASSERT,A,##__VA_ARGS__)
+#define VLOGC(A,...) VLOG(VLOG_CRIT,A,##__VA_ARGS__)
 
 #define VALERT(A,...) VLOG(VLOG_ALERT,A,##__VA_ARGS__)
 
