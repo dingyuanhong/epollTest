@@ -1,7 +1,7 @@
 #ifndef CONNECT_H
 #define CONNECT_H
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <netinet/in.h>
 #define SOCKET int
 #endif

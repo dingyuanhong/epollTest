@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#ifndef WIN32
+#ifndef _WIN32
 #include <sys/un.h>
 #include <arpa/inet.h>
 #endif

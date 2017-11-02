@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <stdlib.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <WinSock2.h>
 //#include <Ws2def.h>
 #include <Ws2ipdef.h>
