@@ -28,7 +28,7 @@ int main()
 		return -1;
 	}
 
-	int server = createServerConnect(config);
+	int server = createServerConnect(config->socket_ptr,config->max_listen);
 	if(server == -1)
 	{
 		return -1;

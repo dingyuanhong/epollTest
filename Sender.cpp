@@ -11,7 +11,7 @@ int main()
 {
 	int sock = socket(AF_INET,SOCK_STREAM,0);
 	VASSERT(sock != -1);
-	struct sockaddr * addr = createSocket("127.0.0.1",9999);
+	struct sockaddr * addr = createSocketAddr("127.0.0.1",9999);
 	int ret = connect(sock,addr,GetSockaddrSize(addr));
 	VASSERT(ret != -1);
 	VLOGI("connect success.");
