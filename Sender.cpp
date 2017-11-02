@@ -2,16 +2,32 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "log.h"
 #include "connect_core.h"
 #include "process_core.h"
 
-int main()
+int main(int argc, char* argv[])
 {
+	if(argc < 3)
+	{
+		printf("command: ip port.\n");
+		return 0;
+	}
+	char * ip = argv[1];
+	int port = atoi(argv[2]);
+	if (port <= 0) {
+		printf("端口错误:%d",port);
+		return 0;
+	}
+
+	printf("ip:%s\n",ip);
+	printf("port:%d\n",port);
+
 	int sock = socket(AF_INET,SOCK_STREAM,0);
 	VASSERT(sock != -1);
-	struct sockaddr * addr = createSocketAddr("127.0.0.1",9999);
+	struct sockaddr * addr = createSocketAddr(ip,port);
 	int ret = connect(sock,addr,GetSockaddrSize(addr));
 	VASSERT(ret != -1);
 	VLOGI("connect success.");
