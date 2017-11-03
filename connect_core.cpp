@@ -172,7 +172,7 @@ int connectRead(int fd,struct connect_core * connect)
 	}else if(ret == -1){
 		if(errno == EAGAIN)
 		{
-			VLOGI("recv EAGAIN 缓冲区已无数据可读.");
+			VLOGD("recv EAGAIN 缓冲区已无数据可读.");
 			return 0;
 		}else{
 			VLOGE("recv error.");
@@ -205,7 +205,7 @@ int connectWrite(int fd,struct connect_core * connect)
 		return CONNECT_STATUS_CLOSE;
 	}else if(ret != 65535)
 	{
-		VLOGI("send data 未完全发送.(%d)",ret);
+		VLOGD("send data 未完全发送.(%d)",ret);
 	}
 	return CONNECT_STATUS_CONTINUE;
 }

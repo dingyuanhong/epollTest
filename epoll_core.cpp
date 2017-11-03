@@ -185,7 +185,7 @@ void epoll_event_status(int event,int status,struct epoll_core * core,struct epo
 		event_ptr->events &= ~EPOLLIN;
 		event_ptr->events &= ~EPOLLOUT;
 		event_ptr->events |= EPOLLRDHUP;
-		VLOGI("CONNECT_STATUS_CLOSE(%d) events:%x",fd,event_ptr->events);
+		VLOGD("CONNECT_STATUS_CLOSE(%d) events:%x",fd,event_ptr->events);
 		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
@@ -195,7 +195,7 @@ void epoll_event_status(int event,int status,struct epoll_core * core,struct epo
 	{
 		event_ptr->events &= ~EPOLLIN;
 		event_ptr->events |= EPOLLOUT;
-		VLOGI("CONNECT_STATUS_SEND(%d) events:%x",fd,event_ptr->events);
+		VLOGD("CONNECT_STATUS_SEND(%d) events:%x",fd,event_ptr->events);
 		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
@@ -205,7 +205,7 @@ void epoll_event_status(int event,int status,struct epoll_core * core,struct epo
 	{
 		event_ptr->events &= ~EPOLLOUT;
 		event_ptr->events |= EPOLLIN;
-		VLOGI("CONNECT_STATUS_RECV(%d) events:%x",fd,event_ptr->events);
+		VLOGD("CONNECT_STATUS_RECV(%d) events:%x",fd,event_ptr->events);
 		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
@@ -213,7 +213,7 @@ void epoll_event_status(int event,int status,struct epoll_core * core,struct epo
 		}
 	}else if(status & CONNECT_STATUS_CONTINUE)
 	{
-		// VLOGI("CONNECT_STATUS_CONTINUE(%d) events:%x",fd,event_ptr->events);
+		// VLOGD("CONNECT_STATUS_CONTINUE(%d) events:%x",fd,event_ptr->events);
 		// int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
 		// if(ret == -1)
 		// {
@@ -221,7 +221,7 @@ void epoll_event_status(int event,int status,struct epoll_core * core,struct epo
 		// }
 	}else if(status == 0)
 	{
-
+		// VLOGD("CONNECT_STATUS_RECV(%d) events:%x",fd,event_ptr->events);
 	}
 	else{
 		VLOGE("Unnown(%d) events:%d stasus:%d error",fd,event,status);
@@ -259,7 +259,7 @@ int epoll_event_process(struct epoll_core ** core_ptr,struct config_core * confi
 			struct epoll_event *event_ptr = &events_ptr[i];
 			VASSERT(event_ptr != NULL);
 			int events = event_ptr->events;
-			// VLOGI("events:%x %p",events,event_ptr->data.ptr);
+			// VLOGD("events:%x %p",events,event_ptr->data.ptr);
 
 			struct interface_core *interface_ptr = (struct interface_core*)event_ptr->data.ptr;
 			VASSERT(interface_ptr != NULL);
@@ -276,9 +276,9 @@ int epoll_event_process(struct epoll_core ** core_ptr,struct config_core * confi
 					continue;
 				}
 				int fd = connect->fd;
-				// VLOGI("EPOLLIN(%d) data ...",fd);
+				// VLOGD("EPOLLIN(%d) data ...",fd);
 				int ret = connectRead(fd,connect);
-				// VLOGI("EPOLLIN(%d) data .",fd);
+				// VLOGD("EPOLLIN(%d) data .",fd);
 				epoll_event_status(EPOLLIN,ret,core,event_ptr);
 			}
 			else if(events & EPOLLOUT)
@@ -289,9 +289,9 @@ int epoll_event_process(struct epoll_core ** core_ptr,struct config_core * confi
 					continue;
 				}
 				int fd = connect->fd;
-				// VLOGI("EPOLLOUT(%d) data ...",fd);
+				// VLOGD("EPOLLOUT(%d) data ...",fd);
 				int ret = connectWrite(fd,connect);
-				// VLOGI("EPOLLOUT(%d) data .",fd);
+				// VLOGD("EPOLLOUT(%d) data .",fd);
 				epoll_event_status(EPOLLOUT,ret,core,event_ptr);
 
 			}
