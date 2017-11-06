@@ -16,7 +16,7 @@ int ConnectTest(const char * ip, int port)
 	}
 	struct sockaddr *addr = createSocketAddr(ip, port);
 	VASSERTL("createSocketAddr:", addr != NULL);
-	VASSERTA(addr == NULL,"%d",11);
+
 	nonBlocking(sock);
 
 	int ret = connect(sock, addr, GetSockaddrSize(addr));
