@@ -1,13 +1,10 @@
-
 #include <WinSock2.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <windows.h>
 
 #include "log.h"
 #include "connect_core.h"
 #include "taskConfig.h"
-
-#pragma comment(lib,"ws2_32.lib")
 
 int ConnectTest(const char * ip, int port)
 {
@@ -19,11 +16,11 @@ int ConnectTest(const char * ip, int port)
 	}
 	struct sockaddr *addr = createSocketAddr(ip, port);
 	VASSERTL("createSocketAddr:", addr != NULL);
-
+	VASSERTA(addr == NULL,"%d",11);
 	nonBlocking(sock);
 
 	int ret = connect(sock, addr, GetSockaddrSize(addr));
-	VASSERTL("connect:", ret != -1);
+	//VASSERTL("connect:", ret != -1);
 	if (ret == -1)
 	{
 		fd_set set;
@@ -37,7 +34,7 @@ int ConnectTest(const char * ip, int port)
 		if (select(-1, NULL, &set, NULL, &tm) <= 0)
 		{
 			// select错误或者超时
-			VLOGE("select error(%d)", errno);
+			//VLOGE("select error(%d)", errno);
 			closesocket(sock);
 			free(addr);
 			return -1;
@@ -50,7 +47,7 @@ int ConnectTest(const char * ip, int port)
 
 			if (0 != error)
 			{
-				VLOGE("getsockopt error(%d)", error);
+				//VLOGE("getsockopt error(%d)", error);
 				closesocket(sock);
 				free(addr);
 				return -1;
@@ -61,14 +58,15 @@ int ConnectTest(const char * ip, int port)
 	int blockMode = 0;
 	ioctlsocket(sock, FIONBIO, (u_long FAR*)&blockMode); //设置为阻塞模式 
 
-#define  MAX_BUFFER_READ  65535
+#define  MAX_BUFFER_READ  1024
 
 	while (true) {
+		Sleep(1000);
 		char buffer[MAX_BUFFER_READ];
 		ret = send(sock, buffer, MAX_BUFFER_READ, 0);
 		if (ret == SOCKET_ERROR)
 		{
-			VLOGE("send error(%d)(%d)", ret, errno);
+			//VLOGE("(%d)send error(%d)(%d)",sock, ret, errno);
 			break;
 		}
 		else if (ret == MAX_BUFFER_READ)
@@ -81,7 +79,7 @@ int ConnectTest(const char * ip, int port)
 		}
 	}
 
-	VLOGI("socket colse.");
+	//VLOGI("socket colse.");
 	shutdown(sock, SD_BOTH);
 
 	closesocket(sock);
@@ -91,16 +89,30 @@ int ConnectTest(const char * ip, int port)
 }
 
 
+
 int Task(Config * cfg)
 {
-	while (TRUE)
+	InterlockedIncrement(&cfg->active);
+	int retryCount = 0;
+	int runCount = 100;
+	while (runCount > 0)
 	{
-		int ret = ConnectTest(cfg->ip, cfg->port);
+		int ret = ConnectTest(cfg->ip,cfg->port);
 		if (ret != 0)
 		{
-			VLOGE("任务执行失败.");
-			Sleep(1);
+			//Sleep(1);
+			retryCount++;
 		}
+		else
+		{
+			break;
+		}
+		runCount--;
 	}
+	if (retryCount != 0) {
+		VLOGD("线程重试:%d", retryCount);
+	}
+	InterlockedDecrement(&cfg->active);
 	return 0;
 }
+

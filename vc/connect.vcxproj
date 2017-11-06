@@ -150,11 +150,14 @@
     <ClCompile Include="..\connect_core.cpp" />
     <ClCompile Include="..\log.cpp" />
     <ClCompile Include="connect.cpp" />
+    <ClCompile Include="taskConfig.cpp" />
+    <ClCompile Include="taskMain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\config.h" />
     <ClInclude Include="..\connect_core.h" />
     <ClInclude Include="..\log.h" />
+    <ClInclude Include="taskConfig.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

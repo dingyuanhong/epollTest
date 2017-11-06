@@ -15,28 +15,37 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="connect.cpp">
+    <ClCompile Include="onlyConnect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\log.cpp">
+    <ClCompile Include="..\config.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="..\connect_core.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\config.cpp">
+    <ClCompile Include="..\log.cpp">
       <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="taskMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="taskConfig.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\log.h">
+    <ClInclude Include="..\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\connect_core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\config.h">
+    <ClInclude Include="..\log.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="taskConfig.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
