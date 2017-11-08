@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 		}
 		printf("稳定存活数:%d\n", lastActive);
 
-		VASSERTA(cfg.threadCount <= MAXIMUM_WAIT_OBJECTS,"线程数:%d 单次等待最大值:%d.", cfg.threadCount,MAXIMUM_WAIT_OBJECTS);
+		VWARNA(cfg.threadCount <= MAXIMUM_WAIT_OBJECTS,"线程数:%d 单次等待最大值:%d.", cfg.threadCount,MAXIMUM_WAIT_OBJECTS);
 
 		int waitCount = cfg.threadCount;
 		int waitedCount = 0;
