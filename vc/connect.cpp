@@ -6,6 +6,7 @@
 #include "log.h"
 #include "connect_core.h"
 #include "taskConfig.h"
+#include <errors.h>
 
 #pragma comment(lib,"ws2_32.lib")
 
@@ -21,8 +22,9 @@ int ConnectTest(const char * ip, int port)
 	VASSERTL("createSocketAddr:", addr != NULL);
 
 	nonBlocking(sock);
-
 	int ret = connect(sock, addr, GetSockaddrSize(addr));
+	int errorno = WSAGetLastError();
+	VASSERT(WSAETIMEDOUT == errorno);
 	VASSERTL("connect:", ret != -1);
 	if (ret == -1)
 	{
@@ -68,7 +70,8 @@ int ConnectTest(const char * ip, int port)
 		ret = send(sock, buffer, MAX_BUFFER_READ, 0);
 		if (ret == SOCKET_ERROR)
 		{
-			VLOGE("send error(%d)(%d)", ret, errno);
+			int errorno = WSAGetLastError();
+			VLOGE("send error(%d)(%d)", ret, errorno);
 			break;
 		}
 		else if (ret == MAX_BUFFER_READ)

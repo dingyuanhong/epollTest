@@ -148,15 +148,30 @@
   <ItemGroup>
     <ClCompile Include="..\config.cpp" />
     <ClCompile Include="..\connect_core.cpp" />
+    <ClCompile Include="..\event.cpp" />
     <ClCompile Include="..\log.cpp" />
+    <ClCompile Include="..\once.cpp" />
+    <ClCompile Include="..\thread.cpp" />
+    <ClCompile Include="..\threadpool.cpp" />
+    <ClCompile Include="..\thread_win.cpp" />
+    <ClCompile Include="..\winapi.cpp" />
     <ClCompile Include="onlyConnect.cpp" />
     <ClCompile Include="taskConfig.cpp" />
     <ClCompile Include="taskMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\atomic-ops.h" />
+    <ClInclude Include="..\atomic.h" />
     <ClInclude Include="..\config.h" />
     <ClInclude Include="..\connect_core.h" />
+    <ClInclude Include="..\event.h" />
+    <ClInclude Include="..\fatal.h" />
     <ClInclude Include="..\log.h" />
+    <ClInclude Include="..\once.h" />
+    <ClInclude Include="..\thread.h" />
+    <ClInclude Include="..\threadpool.h" />
+    <ClInclude Include="..\uv_memory.h" />
+    <ClInclude Include="..\winapi.h" />
     <ClInclude Include="taskConfig.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

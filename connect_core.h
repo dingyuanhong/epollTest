@@ -7,6 +7,11 @@
 #endif
 
 void nonBlocking(SOCKET socket);
+void Reuse(SOCKET socket,int reuse);
+
+struct sockaddr *createSocketAddr(const char * ip,int port);
+int GetSockaddrSize(const struct sockaddr *sockaddr);
+SOCKET createServerConnect(const sockaddr* socket_ptr,int max_listen);
 
 struct interface_core
 {
@@ -31,12 +36,6 @@ void interfaceFree(struct interface_core ** connect_ptr);
 #define CONNECT_STATUS_RECV 0x2
 #define CONNECT_STATUS_CLOSE 0x4
 #define CONNECT_STATUS_CONTINUE 0x8
-
-
-struct sockaddr *createSocketAddr(const char * ip,int port);
-int GetSockaddrSize(const struct sockaddr *sockaddr);
-
-SOCKET createServerConnect(const sockaddr* socket_ptr,int max_listen);
 
 struct connect_core * connectCreate();
 void connectInit(struct connect_core * connect);

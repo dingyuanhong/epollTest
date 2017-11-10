@@ -39,6 +39,7 @@ int main()
 
 	struct epoll_core * epoll_core = process->epoll_ptr;
 	epoll_core->epoll = epoll;
+	epoll_core->event_count = config->concurrent;
 
 	struct interface_core * connect = interfaceCreate();
 	connect->type |= INTERFACE_TYPE_SERVER;
@@ -48,7 +49,10 @@ int main()
 	if(ret != -1)
 	{
 		VLOGI("epoll server success(socket:%d %p)",connect->fd,process);
-		epoll_event_process(&process->epoll_ptr,config);
+		while(!process->signal_term_stop)
+		{
+			epoll_event_process(process->epoll_ptr,config->timeout);
+		}
 	}else{
 		VLOGE("epill_ctl server error(%d)\n",errno);
 	}

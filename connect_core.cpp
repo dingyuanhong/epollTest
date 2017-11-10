@@ -32,6 +32,16 @@ void nonBlocking(SOCKET socket)
 #endif
 }
 
+void Reuse(SOCKET socket,int reuse)
+{
+#ifdef WIN32
+	unsigned long flags = reuse;
+	ioctlsocket(socket, SO_REUSEADDR, &flags);
+#else
+	setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (const void *)&reuse, sizeof(reuse));
+#endif
+}
+
 struct sockaddr *createSocketAddr(const char * ip,int port)
 {
 	struct sockaddr_in * addr = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
@@ -72,6 +82,7 @@ SOCKET createServerConnect(const sockaddr* socket_ptr,int max_listen)
 		return -1;
 	}
 	nonBlocking(server);
+	Reuse(server,1);
 
 	int ret = bind(server, socket_ptr,GetSockaddrSize(socket_ptr));
 	if(ret == -1)
@@ -175,7 +186,7 @@ int connectRead(int fd,struct connect_core * connect)
 			VLOGD("recv EAGAIN 缓冲区已无数据可读.");
 			return 0;
 		}else{
-			VLOGE("recv error.");
+			VLOGE("recv error.(%d)",errno);
 			connect->error = errno;
 			connect->status |= CONNECT_STATUS_CLOSE;
 			return CONNECT_STATUS_CLOSE;
@@ -199,7 +210,7 @@ int connectWrite(int fd,struct connect_core * connect)
 	char buffer[65535];
 	ssize_t ret = send(fd,buffer,65535,MSG_DONTWAIT);
 	if(ret <= 0){
-		VLOGE("send error.");
+		VLOGE("send error.(%d)",errno);
 		connect->error = errno;
 		connect->status |= CONNECT_STATUS_CLOSE;
 		return CONNECT_STATUS_CLOSE;

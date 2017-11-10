@@ -61,13 +61,21 @@ int ConnectTest(const char * ip, int port)
 #define  MAX_BUFFER_READ  1024
 
 	while (true) {
-		Sleep(1000);
+		//Sleep(1000);
 		char buffer[MAX_BUFFER_READ];
 		ret = send(sock, buffer, MAX_BUFFER_READ, 0);
 		if (ret == SOCKET_ERROR)
 		{
-			//VLOGE("(%d)send error(%d)(%d)",sock, ret, errno);
-			break;
+			int errorno = WSAGetLastError();
+			if (WSAECONNRESET == errorno)
+			{
+				break;
+			}
+			else
+			{
+				VLOGE("(%d)send error(%d)(%d)", sock, ret, errorno);
+				break;
+			}
 		}
 		else if (ret == MAX_BUFFER_READ)
 		{
@@ -88,13 +96,13 @@ int ConnectTest(const char * ip, int port)
 	return 0;
 }
 
-
+#define RETRY_TIME 5
 
 int Task(Config * cfg)
 {
 	InterlockedIncrement(&cfg->active);
 	int retryCount = 0;
-	int runCount = 100;
+	int runCount = RETRY_TIME;
 	while (runCount > 0)
 	{
 		int ret = ConnectTest(cfg->ip,cfg->port);
@@ -109,8 +117,11 @@ int Task(Config * cfg)
 		}
 		runCount--;
 	}
-	if (retryCount != 0) {
-		VLOGD("线程重试:%d", retryCount);
+	if (retryCount > 0 && retryCount != RETRY_TIME) {
+		VLOGD("重试连接成功:%d", retryCount);
+	}
+	else if(retryCount == RETRY_TIME){
+		//VLOGE("连接一直失败.");
 	}
 	InterlockedDecrement(&cfg->active);
 	return 0;
