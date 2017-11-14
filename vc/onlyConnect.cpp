@@ -58,7 +58,7 @@ int ConnectTest(const char * ip, int port)
 	int blockMode = 0;
 	ioctlsocket(sock, FIONBIO, (u_long FAR*)&blockMode); //设置为阻塞模式 
 
-#define  MAX_BUFFER_READ  1024
+#define  MAX_BUFFER_READ  65535
 
 	while (true) {
 		//Sleep(1000);

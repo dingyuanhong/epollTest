@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 			}
 			Sleep(1000);
 		}
-		printf("稳定存活数:%d\n", lastActive);
+		printf("稳定存活数:%d\n", cfg.active);
 
 		VWARNA(cfg.threadCount <= MAXIMUM_WAIT_OBJECTS,"线程数:%d 单次等待最大值:%d.", cfg.threadCount,MAXIMUM_WAIT_OBJECTS);
 
@@ -94,6 +94,7 @@ int main(int argc, char* argv[])
 		free(handleTable);
 	}
 
+	printf("存活数:%d\n", cfg.active);
 	WSACleanup();
 	VLOGI("process colse ok.");
 

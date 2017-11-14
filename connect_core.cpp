@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <fcntl.h>
+#include <error.h>
 #endif
 
 #include "log.h"
@@ -181,6 +182,11 @@ int connectRead(int fd,struct connect_core * connect)
 		connect->status |= CONNECT_STATUS_CLOSE;
 		return CONNECT_STATUS_CLOSE;
 	}else if(ret == -1){
+		if(ECONNRESET == errno)
+		{
+			return CONNECT_STATUS_CLOSE;
+		}
+		else
 		if(errno == EAGAIN)
 		{
 			VLOGD("recv EAGAIN 缓冲区已无数据可读.");
@@ -210,10 +216,17 @@ int connectWrite(int fd,struct connect_core * connect)
 	char buffer[65535];
 	ssize_t ret = send(fd,buffer,65535,MSG_DONTWAIT);
 	if(ret <= 0){
-		VLOGE("send error.(%d)",errno);
-		connect->error = errno;
-		connect->status |= CONNECT_STATUS_CLOSE;
-		return CONNECT_STATUS_CLOSE;
+		if(ECONNRESET == errno)
+		{
+			return CONNECT_STATUS_CLOSE;
+		}
+		else
+		{
+			VLOGE("send error.(%d)",errno);
+			connect->error = errno;
+			connect->status |= CONNECT_STATUS_CLOSE;
+			return CONNECT_STATUS_CLOSE;
+		}
 	}else if(ret != 65535)
 	{
 		VLOGD("send data 未完全发送.(%d)",ret);
