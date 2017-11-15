@@ -36,7 +36,9 @@ event_handle CreateEvent(bool bManualReset, bool bInitialState);
 
 int WaitForEvent(event_handle event, long milliseconds);
 
+//返回值:0 成功 其他:错误码
 int ResetEvent(event_handle event);
+//返回值:0 成功 其他:错误码
 int SetEvent(event_handle event);
 
 void CloseEvent(event_handle event);

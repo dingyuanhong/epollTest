@@ -11,7 +11,7 @@
 #define VLOG_ALERT 0x20  //警报
 #define VLOG_ERROR 0x40  //错误
 #define VLOG_ASSERT 0x80 //断言
-#define VLOG_EMERG 0x100 //紧急 
+#define VLOG_EMERG 0x100 //紧急
 #define VLOG_CRIT 0x200	//非常严重
 
 void VVprintf(const char * file,const char * func,int line,int level,const char* format,...);
@@ -34,13 +34,13 @@ int VLOG_GetLevel();
 #define VALERT(A,...) VLOG(VLOG_ALERT,A,##__VA_ARGS__)
 
 #define VASSERT(_exp) if((!(_exp))) VLOG(VLOG_ASSERT, #_exp);
-#define VASSERTL(A,_exp) if((!(_exp))) VLOG(VLOG_ASSERT, A##" "#_exp);
-#define VASSERTR(_exp,A) if((!(_exp))) VLOG(VLOG_ASSERT, #_exp##" "##A);
-#define VASSERTA(_exp,A,...) if((!(_exp))) VLOG(VLOG_ASSERT,"("#_exp##") "##A,##__VA_ARGS__);
+#define VASSERTL(A,_exp) if((!(_exp))) VLOG(VLOG_ASSERT, A " " #_exp);
+#define VASSERTR(_exp,A) if((!(_exp))) VLOG(VLOG_ASSERT, #_exp " " A);
+#define VASSERTA(_exp,A,...) if((!(_exp))) VLOG(VLOG_ASSERT,"(" #_exp ") " A,##__VA_ARGS__);
 
 #define VWARN(_exp) if((!(_exp))) VLOG(VLOG_WARN,#_exp);
-#define VWARNL(A,_exp) if((!(_exp))) VLOG(VLOG_WARN,A##" "#_exp);
-#define VWARNR(_exp,A) if((!(_exp))) VLOG(VLOG_WARN,#_exp##" "##A);
-#define VWARNA(_exp,A,...) if((!(_exp))) VLOG(VLOG_WARN,"("#_exp##") "##A,##__VA_ARGS__);
+#define VWARNL(A,_exp) if((!(_exp))) VLOG(VLOG_WARN,A " " #_exp);
+#define VWARNR(_exp,A) if((!(_exp))) VLOG(VLOG_WARN,#_exp " " A);
+#define VWARNA(_exp,A,...) if((!(_exp))) VLOG(VLOG_WARN,"(" #_exp ") " A,##__VA_ARGS__);
 
 #endif

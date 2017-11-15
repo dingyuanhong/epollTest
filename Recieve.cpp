@@ -37,10 +37,13 @@ int main()
 	struct process_core * process = processGetDefault();
 	VASSERT(process != NULL);
 
+	uv_async_event_t async;
+	uv_async_init(&async);
+
 	struct epoll_core * epoll_core = process->epoll_ptr;
 	epoll_core->epoll = epoll;
 	epoll_core->event_count = config->concurrent;
-
+	epoll_core->pool = threadpool_create(&async);
 	struct interface_core * connect = interfaceCreate();
 	connect->type |= INTERFACE_TYPE_SERVER;
 	connect->fd = server;
@@ -48,10 +51,12 @@ int main()
 	int ret = epoll_event_add(epoll_core,connect);
 	if(ret != -1)
 	{
-		VLOGI("epoll server success(socket:%d %p)",connect->fd,process);
+		VLOGI("server:%d process:%p",connect->fd,process);
+		VLOGI("epoll:%d pool:%p",epoll_core->epoll,epoll_core->pool);
 		while(!process->signal_term_stop)
 		{
 			epoll_event_process(process->epoll_ptr,config->timeout);
+			uv_async_done(&async);
 		}
 	}else{
 		VLOGE("epill_ctl server error(%d)\n",errno);

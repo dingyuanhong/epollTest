@@ -48,8 +48,10 @@ static int LOG_LEVEL_NAME_[]=
 	VLOG_EMERG,
 	6,
 	VLOG_ALERT,
+#ifndef _WIN32
 	7,
 	VLOG_CRIT,
+#endif
 	8,
 	VLOG_NOTICE,
 	9

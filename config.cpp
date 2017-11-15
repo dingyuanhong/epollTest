@@ -41,7 +41,7 @@ void configInit(config_core * config)
 	}
 	config->socket_ptr = createSocketAddr("0.0.0.0",9999);
 
-	config->timeout = 200;
+	config->timeout = 10;
 	config->concurrent = 1024;
 }
 

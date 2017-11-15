@@ -6,6 +6,8 @@
 #define SOCKET int
 #endif
 
+#include "threadpool.h"
+
 void nonBlocking(SOCKET socket);
 void Reuse(SOCKET socket,int reuse);
 
@@ -25,6 +27,10 @@ struct connect_core
 	SOCKET fd;
 	int status;
 	int error;
+	uv_work_t work;
+	int ret;
+	int events;
+	void * ptr;
 };
 
 #define INTERFACE_TYPE_SERVER 0x1
@@ -42,8 +48,8 @@ void connectInit(struct connect_core * connect);
 void connectClear(struct connect_core * connect);
 void connectFree(struct connect_core ** connect_ptr);
 
-int connectRead(int fd,struct connect_core * connect);
-int connectWrite(int fd,struct connect_core * connect);
+int connectRead(struct connect_core * connect);
+int connectWrite(struct connect_core * connect);
 int connectGetErrno(struct connect_core * connect);
 
 #endif

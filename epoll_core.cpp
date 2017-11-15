@@ -24,6 +24,7 @@ struct epoll_core * epollCreate()
 void epollInit(struct epoll_core * core)
 {
 	if(core == NULL) return;
+	core->pool = NULL;
 	core->epoll = -1;
 	core->events_ptr = NULL;
 	core->event_count = 0;
@@ -45,6 +46,7 @@ void epollFree(struct epoll_core ** core_ptr)
 		core->events_ptr = NULL;
 	}
 	core->event_count = 0;
+	core->pool = NULL;
 	free(core);
 	*core_ptr = NULL;
 }
@@ -108,10 +110,11 @@ static void epoll_event_accept(struct epoll_core * core,struct epoll_event *even
 
 	struct connect_core * connect_ptr = connectCreate();
 	connect_ptr->fd = connect;
+	connect_ptr->ptr = (void*)core;
 
 	struct epoll_event event;
 	event.data.ptr = (void*)connect_ptr;
-	event.events = EPOLLIN;
+	event.events = EPOLLIN | EPOLLONESHOT;
 	//边缘模式
 	// event.events = EPOLLIN | EPOLLET;
 	int ret = epoll_ctl(core->epoll,EPOLL_CTL_ADD,connect,&event);
@@ -179,53 +182,130 @@ void epoll_event_status(int event,int status,struct epoll_core * core,struct epo
 	if(connect == NULL) return;
 	VASSERT(connect != NULL);
 	int fd = connect->fd;
+	VASSERT(core != NULL);
 
 	if(status & CONNECT_STATUS_CLOSE)
 	{
+		VLOGD("CONNECT_STATUS_CLOSE(%d) events:%x",fd,event_ptr->events);
+
 		event_ptr->events &= ~EPOLLIN;
 		event_ptr->events &= ~EPOLLOUT;
 		event_ptr->events |= EPOLLRDHUP;
-		VLOGD("CONNECT_STATUS_CLOSE(%d) events:%x",fd,event_ptr->events);
 		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
-			VLOGE("%s(%d) epoll_ctl close error.",evnet_name,fd);
+			VLOGE("%s(%d) epoll_ctl error.",evnet_name,fd);
 		}
 	}else if(status & CONNECT_STATUS_SEND)
 	{
+		VLOGD("CONNECT_STATUS_SEND(%d) events:%x",fd,event_ptr->events);
+
 		event_ptr->events &= ~EPOLLIN;
 		event_ptr->events |= EPOLLOUT;
-		VLOGD("CONNECT_STATUS_SEND(%d) events:%x",fd,event_ptr->events);
 		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
-			VLOGE("%s(%d) epoll_ctl send error.",evnet_name,fd);
+			VLOGE("%s(%d) epoll_ctl error(%d).",evnet_name,fd,errno);
 		}
 	}else if(status & CONNECT_STATUS_RECV)
 	{
+		// VLOGD("CONNECT_STATUS_RECV(%d) events:%x",fd,event_ptr->events);
+
 		event_ptr->events &= ~EPOLLOUT;
 		event_ptr->events |= EPOLLIN;
-		VLOGD("CONNECT_STATUS_RECV(%d) events:%x",fd,event_ptr->events);
 		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
-			VLOGE("%s(%d) epoll_ctl recv error.",evnet_name,fd);
+			VLOGE("%s(%d) epoll_ctl error(%d).",evnet_name,fd,errno);
 		}
 	}else if(status & CONNECT_STATUS_CONTINUE)
 	{
-		// VLOGD("CONNECT_STATUS_CONTINUE(%d) events:%x",fd,event_ptr->events);
-		// int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
-		// if(ret == -1)
-		// {
-		// 	VLOGE("%s(%d) epoll_ctl recv error.",evnet_name,fd);
-		// }
+		VLOGD("CONNECT_STATUS_CONTINUE(%d) events:%x",fd,event_ptr->events);
+		if(event_ptr->events & EPOLLONESHOT)
+		{
+			int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
+			if(ret == -1)
+			{
+				VLOGE("%s(%d) epoll_ctl error(%d).",evnet_name,fd,errno);
+			}
+		}
 	}else if(status == 0)
 	{
-		// VLOGD("CONNECT_STATUS_RECV(%d) events:%x",fd,event_ptr->events);
+		VLOGD("status == 0 (%d) events:%x",fd,event_ptr->events);
+		if(event_ptr->events & EPOLLONESHOT)
+		{
+			event_ptr->events &= ~EPOLLOUT;
+			event_ptr->events |= EPOLLIN;
+			int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
+			if(ret == -1)
+			{
+				VLOGE("%s(%d) epoll_ctl error(%d).",evnet_name,fd,errno);
+			}
+		}
 	}
 	else{
 		VLOGE("Unnown(%d) events:%d stasus:%d error",fd,event,status);
 	}
+}
+
+static void work_read(uv_work_t* req)
+{
+	//uv_work_t* req = container_of(w, uv_work_t, work_req);
+	struct connect_core *connect = container_of(req,struct connect_core,work);
+	int ret = 0;
+	while(true)
+	{
+		ret = connectRead(connect);
+		if(ret == CONNECT_STATUS_CONTINUE)
+		{
+			if(connect->events & EPOLLET)
+			{
+				continue;
+			}
+		}
+		break;
+	}
+	connect->ret = ret;
+}
+
+static void done_read(uv_work_t* req, int status)
+{
+	//uv_work_t* req = container_of(w, uv_work_t, work_req);
+	struct connect_core *connect = container_of(req,struct connect_core,work);
+	VASSERT(connect != NULL);
+	struct epoll_core * core = (struct epoll_core *)connect->ptr;
+	VASSERT(core != NULL);
+
+	int ret = connect->ret;
+	struct epoll_event event;
+	event.data.ptr = (void*)connect;
+	event.events = connect->events;
+	event.events |= EPOLLONESHOT;
+	epoll_event_status(EPOLLIN,ret,core,&event);
+}
+
+static void work_write(uv_work_t* req)
+{
+	//uv_work_t* req = container_of(w, uv_work_t, work_req);
+	struct connect_core *connect = container_of(req,struct connect_core,work);
+	int ret = connectWrite(connect);
+	connect->ret = ret;
+}
+
+static void done_write(uv_work_t* req, int status)
+{
+	//uv_work_t* req = container_of(w, uv_work_t, work_req);
+	struct connect_core *connect = container_of(req,struct connect_core,work);
+	VASSERT(connect != NULL);
+	struct epoll_core * core = (struct epoll_core *)connect->ptr;
+	VASSERT(core != NULL);
+
+	int ret = connect->ret;
+	struct epoll_event event;
+	event.data.ptr = (void*)connect;
+	event.events = connect->events;
+	event.events |= EPOLLONESHOT;
+	epoll_event_status(EPOLLOUT,ret,core,&event);
 }
 
 int epoll_event_process(struct epoll_core * core,long timeout)
@@ -259,8 +339,6 @@ int epoll_event_process(struct epoll_core * core,long timeout)
 	{
 		struct epoll_event *event_ptr = &events_ptr[i];
 		VASSERT(event_ptr != NULL);
-		int events = event_ptr->events;
-		// VLOGD("events:%x %p",events,event_ptr->data.ptr);
 
 		struct interface_core *interface_ptr = (struct interface_core*)event_ptr->data.ptr;
 		VASSERT(interface_ptr != NULL);
@@ -269,66 +347,57 @@ int epoll_event_process(struct epoll_core * core,long timeout)
 		{
 			epoll_event_accept(core,event_ptr);
 		}
-		else if(events & EPOLLIN)
-		{
-			struct connect_core *connect = (struct connect_core*)event_ptr->data.ptr;
-			if(connect == NULL){
-				VLOGE("EPOLLOUT connect_core == NULL");
-				continue;
-			}
-			int fd = connect->fd;
-			// VLOGD("EPOLLIN(%d) data ...",fd);
-			int ret = connectRead(fd,connect);
-			// VLOGD("EPOLLIN(%d) data .",fd);
-			epoll_event_status(EPOLLIN,ret,core,event_ptr);
-		}
-		else if(events & EPOLLOUT)
-		{
-			struct connect_core *connect = (struct connect_core*)event_ptr->data.ptr;
-			if(connect == NULL){
-				VLOGE("EPOLLOUT connect_core == NULL");
-				continue;
-			}
-			int fd = connect->fd;
-			// VLOGD("EPOLLOUT(%d) data ...",fd);
-			int ret = connectWrite(fd,connect);
-			// VLOGD("EPOLLOUT(%d) data .",fd);
-			epoll_event_status(EPOLLOUT,ret,core,event_ptr);
-
-		}
-		else if(events & EPOLLRDHUP)
-		{
-			//主动请求关闭
-			//对端关闭或者关闭写模式,本端关闭读模式
-			// epoll_event_shutdown(EPOLLRDHUP,event_ptr,SHUT_RD);
-			epoll_event_close(EPOLLRDHUP,core,event_ptr);
-		}
-		else if(events & EPOLLHUP)
-		{
-			//对端关闭或者关闭写模式,本端关闭读模式
-			epoll_event_shutdown(EPOLLRDHUP,event_ptr,SHUT_RD);
-			// epoll_event_close(EPOLLRDHUP,core,event_ptr);
-		}
-		else if(events & EPOLLERR)
-		{
-			epoll_event_close(EPOLLERR,core,event_ptr);
-		}else if(events & EPOLLPRI)
-		{
-			//带外数据
-			epoll_event_dump(EPOLLET,event_ptr);
-		}
-		else if(events & EPOLLET)
-		{
-			//边缘触发
-			epoll_event_dump(EPOLLET,event_ptr);
-		}
-		// else if(events & EPOLLNVAL)
-		// {
-		// 	//文件描述符未打开
-		// 	epoll_event_dump(EPOLLNVAL,event_ptr);
-		// }
 		else{
-			epoll_event_dump(0,event_ptr);
+			int events = event_ptr->events;
+			// VLOGD("events:%x %p",events,event_ptr->data.ptr);
+			struct connect_core *connect = (struct connect_core*)event_ptr->data.ptr;
+			if(connect == NULL){
+				VLOGE("EPOLLOUT connect_core == NULL");
+				continue;
+			}
+			connect->events = events;
+			if(events & EPOLLIN)
+			{
+				uv_queue_work(core->pool,&connect->work,work_read,done_read);
+			}
+			else if(events & EPOLLOUT)
+			{
+				uv_queue_work(core->pool,&connect->work,work_write,done_write);
+			}
+			else if(events & EPOLLRDHUP)
+			{
+				//主动请求关闭
+				//对端关闭或者关闭写模式,本端关闭读模式
+				// epoll_event_shutdown(EPOLLRDHUP,event_ptr,SHUT_RD);
+				epoll_event_close(EPOLLRDHUP,core,event_ptr);
+			}
+			else if(events & EPOLLHUP)
+			{
+				//对端关闭或者关闭写模式,本端关闭读模式
+				epoll_event_shutdown(EPOLLRDHUP,event_ptr,SHUT_RD);
+				// epoll_event_close(EPOLLRDHUP,core,event_ptr);
+			}
+			else if(events & EPOLLERR)
+			{
+				epoll_event_close(EPOLLERR,core,event_ptr);
+			}else if(events & EPOLLPRI)
+			{
+				//带外数据
+				epoll_event_dump(EPOLLET,event_ptr);
+			}
+			else if(events & EPOLLET)
+			{
+				//边缘触发
+				epoll_event_dump(EPOLLET,event_ptr);
+			}
+			// else if(events & EPOLLNVAL)
+			// {
+			// 	//文件描述符未打开
+			// 	epoll_event_dump(EPOLLNVAL,event_ptr);
+			// }
+			else{
+				epoll_event_dump(0,event_ptr);
+			}
 		}
 	}
 	return 0;

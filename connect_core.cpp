@@ -141,6 +141,7 @@ void connectInit(struct connect_core * connect)
 	connect->fd = -1;
 	connect->status = 0;
 	connect->error = 0;
+	connect->ret = 0;
 }
 
 void connectClear(struct connect_core * connect)
@@ -154,6 +155,8 @@ void connectClear(struct connect_core * connect)
 	connect->fd = -1;
 	connect->status = 0;
 	connect->error = 0;
+	connect->ret = 0;
+	connect->ptr = NULL;
 }
 
 void connectFree(struct connect_core ** connect_ptr)
@@ -167,13 +170,15 @@ void connectFree(struct connect_core ** connect_ptr)
 	*connect_ptr = NULL;
 }
 
-int connectRead(int fd,struct connect_core * connect)
+int connectRead(struct connect_core * connect)
 {
 	if(connect == NULL) return CONNECT_STATUS_CLOSE;
 	if(connect->status & CONNECT_STATUS_CLOSE)
 	{
 		return CONNECT_STATUS_CLOSE;
 	}
+	int fd = connect->fd;
+
 	char buffer[65535];
 	ssize_t ret = recv(fd,buffer,65535,MSG_DONTWAIT);
 	if(ret == 0)
@@ -191,7 +196,8 @@ int connectRead(int fd,struct connect_core * connect)
 		{
 			VLOGD("recv EAGAIN 缓冲区已无数据可读.");
 			return 0;
-		}else{
+		}
+		else{
 			VLOGE("recv error.(%d)",errno);
 			connect->error = errno;
 			connect->status |= CONNECT_STATUS_CLOSE;
@@ -200,19 +206,19 @@ int connectRead(int fd,struct connect_core * connect)
 	}else if(ret != 65535)
 	{
 		// VLOGI("recv data 接受完成.(%d)",ret);
-		return 0;
+		return CONNECT_STATUS_CONTINUE | CONNECT_STATUS_RECV;
 	}
-	return CONNECT_STATUS_CONTINUE;
+	return CONNECT_STATUS_CONTINUE | CONNECT_STATUS_RECV;
 }
 
-int connectWrite(int fd,struct connect_core * connect)
+int connectWrite(struct connect_core * connect)
 {
 	if(connect == NULL) return CONNECT_STATUS_CLOSE;
 	if(connect->status & CONNECT_STATUS_CLOSE)
 	{
 		return CONNECT_STATUS_CLOSE;
 	}
-
+	int fd = connect->fd;
 	char buffer[65535];
 	ssize_t ret = send(fd,buffer,65535,MSG_DONTWAIT);
 	if(ret <= 0){
@@ -231,7 +237,7 @@ int connectWrite(int fd,struct connect_core * connect)
 	{
 		VLOGD("send data 未完全发送.(%d)",ret);
 	}
-	return CONNECT_STATUS_CONTINUE;
+	return CONNECT_STATUS_CONTINUE | CONNECT_STATUS_SEND;
 }
 
 int connectGetErrno(struct connect_core * connect)

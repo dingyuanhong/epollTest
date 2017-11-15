@@ -4,7 +4,7 @@
 
 #define uv_once_t uv_cross_once_t
 
-static void uv__once_inner(uv_once_t* guard, void (*callback)(void)) {
+static void uv__cross_once_inner(uv_once_t* guard, void (*callback)(void)) {
 	event_handle existing_event, created_event;
 
 	created_event = CreateEvent( 1, 0);
@@ -26,7 +26,11 @@ static void uv__once_inner(uv_once_t* guard, void (*callback)(void)) {
 		/* We won the race */
 		callback();
 		int result = SetEvent(created_event);
-		VASSERT(result);
+#ifdef _WIN32
+		VASSERTA(result == 1,"%d error:%d",result,GetLastError());
+#else
+		VASSERTA(result == 0,"%d",result);
+#endif
 		guard->ran = 1;
 	} else {
 		/* We lost the race. Destroy the event we created and wait for the */
@@ -37,7 +41,7 @@ static void uv__once_inner(uv_once_t* guard, void (*callback)(void)) {
 	}
 }
 
-static void uv__once_inner(uv_once_t* guard, void (*callback)(void* param),void* param) {
+static void uv__cross_once_inner(uv_once_t* guard, void (*callback)(void* param),void* param) {
 	event_handle existing_event, created_event;
 
 	created_event = CreateEvent( 1, 0);
@@ -60,7 +64,11 @@ static void uv__once_inner(uv_once_t* guard, void (*callback)(void* param),void*
 		/* We won the race */
 		callback(param);
 		int result = SetEvent(created_event);
-		VASSERT(result);
+#ifdef _WIN32
+		VASSERTA(result == 1,"%d error:%d",result,GetLastError());
+#else
+		VASSERTA(result == 0,"%d",result);
+#endif
 		guard->ran = 1;
 	} else {
 		/* We lost the race. Destroy the event we created and wait for the */
@@ -76,12 +84,12 @@ void uv_cross_once(uv_once_t* guard, void (*callback)(void)) {
 	if (guard->ran) {
 		return;
 	}
-	uv__once_inner(guard, callback);
+	uv__cross_once_inner(guard, callback);
 }
 
 void uv_cross_once(uv_once_t* guard, void (*callback)(void* param),void * param){
 	if (guard->ran) {
 		return;
 	}
-	uv__once_inner(guard, callback,param);
+	uv__cross_once_inner(guard, callback,param);
 }

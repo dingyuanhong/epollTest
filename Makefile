@@ -12,10 +12,10 @@ SRCS += $(wildcard $(SRC_PATH)/*.cpp)
 #中间文件
 OBJS := $(SRCS:.cpp=.o)
 
-SEND_OBJS=Sender.o log.o config.o epoll_core.o process_core.o connect_core.o util.o
+SEND_OBJS=log.o event.o once.o thread.o threadpool.o config.o connect_core.o process_core.o epoll_core.o util.o Sender.o
 SEND_TARGET=sender
 
-RECIEVE_OBJS=Recieve.o log.o config.o epoll_core.o process_core.o connect_core.o util.o
+RECIEVE_OBJS=log.o event.o once.o thread.o threadpool.o util.o config.o process_core.o connect_core.o epoll_core.o Recieve.o
 RECIEVE_TARGET=recieve
 
 #动态库

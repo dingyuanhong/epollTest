@@ -7,7 +7,7 @@ static void uv__cancelled(struct uv__work* w) {
 	abort();
 }
 
-void uv_work_done(uv_async_event_t* handle) {
+void uv_async_done(uv_async_event_t* handle) {
 	struct uv__work* w;
 	QUEUE* q;
 	QUEUE wq;
@@ -27,7 +27,7 @@ void uv_work_done(uv_async_event_t* handle) {
 	}
 }
 
-void uv_work_complited(uv_async_event_t * async,struct uv__work* w)
+void uv_async_complited(uv_async_event_t * async,struct uv__work* w)
 {
 	if(async == NULL)
 	{
@@ -61,8 +61,15 @@ int uv_work_cancel(uv_threadpool_s* pool, struct uv__work* w) {
 	if (!cancelled)
 		return UV_EBUSY;
 
-	uv_work_complited(async,w);
+	uv_async_complited(async,w);
 	return 0;
+}
+
+void uv_async_init(uv_async_event_t *async)
+{
+	QUEUE_INIT(&async->wq);
+	uv_mutex_init(&async->wq_mutex);
+	async->complited = NULL;
 }
 
 static void worker(void* arg) {
@@ -98,7 +105,7 @@ static void worker(void* arg) {
 		w = QUEUE_DATA(q, struct uv__work, wq);
 		w->work(w);
 
-		uv_work_complited(pool->async_complete,w);
+		uv_async_complited(pool->async_complete,w);
 	}
 }
 

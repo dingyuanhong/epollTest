@@ -18,8 +18,10 @@ typedef struct uv_async_event_s
 	void (*complited)(struct uv_async_event_s *w);
 }uv_async_event_t;
 
-void uv_work_complited(uv_async_event_t * async, struct uv__work* w);
-void uv_work_done(uv_async_event_t* handle);
+void uv_async_init(uv_async_event_t *async);
+
+void uv_async_complited(uv_async_event_t * async, struct uv__work* w);
+void uv_async_done(uv_async_event_t* handle);
 
 struct uv__work{
 	void (*work)(struct uv__work *w);
