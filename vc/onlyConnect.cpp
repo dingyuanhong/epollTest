@@ -28,7 +28,7 @@ int ConnectTest(const char * ip, int port)
 		FD_SET(sock, &set);
 		//select ¼ì²â³¬Ê±2s
 		struct timeval tm;
-		tm.tv_sec = 2;
+		tm.tv_sec = 1;
 		tm.tv_usec = 0;
 
 		if (select(-1, NULL, &set, NULL, &tm) <= 0)

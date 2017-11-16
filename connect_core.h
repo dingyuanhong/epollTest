@@ -10,6 +10,8 @@
 
 void nonBlocking(SOCKET socket);
 void Reuse(SOCKET socket,int reuse);
+void cloexec(SOCKET socket);
+void keepalive(SOCKET socket,int keep);
 
 struct sockaddr *createSocketAddr(const char * ip,int port);
 int GetSockaddrSize(const struct sockaddr *sockaddr);
@@ -25,12 +27,15 @@ struct connect_core
 {
 	int type;
 	SOCKET fd;
-	int status;
-	int error;
+
 	uv_work_t work;
-	int ret;
 	int events;
 	void * ptr;
+	long lock;
+
+	int status;
+	int error;
+	int ret;
 };
 
 #define INTERFACE_TYPE_SERVER 0x1

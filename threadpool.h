@@ -20,7 +20,6 @@ typedef struct uv_async_event_s
 
 void uv_async_init(uv_async_event_t *async);
 
-void uv_async_complited(uv_async_event_t * async, struct uv__work* w);
 void uv_async_done(uv_async_event_t* handle);
 
 struct uv__work{

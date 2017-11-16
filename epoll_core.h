@@ -19,8 +19,11 @@ void epollFree(struct epoll_core ** core_ptr);
 
 int epoll_event_process(struct epoll_core * core,long timeout);
 
-void epoll_event_status(int event,int status,struct epoll_core * core,struct epoll_event *event_ptr);
-
 int epoll_event_add(struct epoll_core * core,struct interface_core * connect);
+int epoll_event_add(struct epoll_core * core,struct connect_core * connect);
+void epoll_event_status(struct epoll_core * core,struct epoll_event *event_ptr,int status);
+
+
+void errnoDump(const char * name);
 
 #endif
