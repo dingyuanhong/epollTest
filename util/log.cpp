@@ -3,7 +3,6 @@
 #include <time.h>
 
 #include "log.h"
-#include "staticUtil.h"
 
 static int static_log_level = 0xFFFFFFFF;
 

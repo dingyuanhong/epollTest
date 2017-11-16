@@ -5,12 +5,12 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 
+#include "util/log.h"
+#include "util/atomic.h"
 #include "config.h"
-#include "log.h"
 #include "epoll_core.h"
 #include "connect_core.h"
 #include "process_core.h"
-#include "atomic.h"
 
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))

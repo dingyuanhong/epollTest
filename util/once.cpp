@@ -1,6 +1,7 @@
 #include "log.h"
 #include "atomic.h"
 #include "once.h"
+#include "event.h"
 
 #define uv_once_t uv_cross_once_t
 

@@ -2,9 +2,8 @@
 #define THREADPOOL_H
 
 #include "thread.h"
-#include "queue.h"
-#include "once.h"
-#include "uv_memory.h"
+#include "../util/queue.h"
+#include "../util/once.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 

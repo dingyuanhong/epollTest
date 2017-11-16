@@ -88,7 +88,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..;../util;../module;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -102,7 +102,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..;../util;../module;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,7 +118,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..;../util;../module;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,7 +136,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..;../util;../module;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,7 +148,13 @@
   <ItemGroup>
     <ClCompile Include="..\config.cpp" />
     <ClCompile Include="..\connect_core.cpp" />
-    <ClCompile Include="..\log.cpp" />
+    <ClCompile Include="..\module\thread.cpp" />
+    <ClCompile Include="..\module\threadpool.cpp" />
+    <ClCompile Include="..\module\thread_win.cpp" />
+    <ClCompile Include="..\util\event.cpp" />
+    <ClCompile Include="..\util\log.cpp" />
+    <ClCompile Include="..\util\once.cpp" />
+    <ClCompile Include="..\util\winapi.cpp" />
     <ClCompile Include="connect.cpp" />
     <ClCompile Include="taskConfig.cpp" />
     <ClCompile Include="taskMain.cpp" />
@@ -156,7 +162,18 @@
   <ItemGroup>
     <ClInclude Include="..\config.h" />
     <ClInclude Include="..\connect_core.h" />
-    <ClInclude Include="..\log.h" />
+    <ClInclude Include="..\module\thread.h" />
+    <ClInclude Include="..\module\threadpool.h" />
+    <ClInclude Include="..\util\atomic-ops.h" />
+    <ClInclude Include="..\util\atomic.h" />
+    <ClInclude Include="..\util\event.h" />
+    <ClInclude Include="..\util\fatal.h" />
+    <ClInclude Include="..\util\log.h" />
+    <ClInclude Include="..\util\once.h" />
+    <ClInclude Include="..\util\queue.h" />
+    <ClInclude Include="..\util\staticUtil.h" />
+    <ClInclude Include="..\util\uv_memory.h" />
+    <ClInclude Include="..\util\winapi.h" />
     <ClInclude Include="taskConfig.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

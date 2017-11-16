@@ -21,7 +21,7 @@
 #include <error.h>
 #endif
 
-#include "log.h"
+#include "util/log.h"
 #include "connect_core.h"
 
 void nonBlocking(SOCKET socket)

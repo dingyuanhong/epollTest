@@ -4,8 +4,8 @@
 #include <arpa/inet.h>
 #endif
 
+#include "util/log.h"
 #include "config.h"
-#include "log.h"
 #include "connect_core.h"
 
 static config_core  static_config;

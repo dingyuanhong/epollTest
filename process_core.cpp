@@ -6,7 +6,7 @@
 #include <sched.h>
 #include <sys/sysinfo.h>
 #include <pthread.h>
-#include "log.h"
+#include "util/log.h"
 
 static void handle_signal_term(int sig)
 {

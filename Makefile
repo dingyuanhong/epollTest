@@ -5,17 +5,22 @@ RM = rm -rf
 
 #原始目录
 SRC_PATH :=.
+MODULES :=
 #目标名
 TARGET :=
 #源文件
+MODULES += $(wildcard $(SRC_PATH)/util/*.cpp)
+MODULES += $(wildcard $(SRC_PATH)/module/*.cpp)
+SRCS += $(MODULES)
 SRCS += $(wildcard $(SRC_PATH)/*.cpp)
 #中间文件
 OBJS := $(SRCS:.cpp=.o)
 
-SEND_OBJS=log.o event.o once.o thread.o threadpool.o config.o connect_core.o process_core.o epoll_core.o util.o Sender.o
+MODULE_OBJS := $(MODULES:.cpp=.o)
+SEND_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o epoll_core.o Sender.o
 SEND_TARGET=sender
 
-RECIEVE_OBJS=log.o event.o once.o thread.o threadpool.o util.o config.o process_core.o connect_core.o epoll_core.o Recieve.o
+RECIEVE_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o epoll_core.o Recieve.o
 RECIEVE_TARGET=recieve
 
 #动态库

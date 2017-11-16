@@ -23,9 +23,9 @@
 #include <limits.h>
 #include <stdlib.h>
 #include "thread.h"
-#include "uv_memory.h"
-#include "fatal.h"
-#include "winapi.h"
+#include "../util/uv_memory.h"
+#include "../util/fatal.h"
+#include "../util/winapi.h"
 
 #ifdef _WIN32
 #include <process.h>

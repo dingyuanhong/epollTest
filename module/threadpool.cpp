@@ -1,6 +1,6 @@
 #include "threadpool.h"
-#include "log.h"
-#include "uv_memory.h"
+#include "../util/log.h"
+#include "../util/uv_memory.h"
 
 static QUEUE exit_message;
 static void uv__cancelled(struct uv__work* w) {

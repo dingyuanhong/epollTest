@@ -7,8 +7,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+#include "util/log.h"
 #include "config.h"
-#include "log.h"
 #include "connect_core.h"
 #include "process_core.h"
 

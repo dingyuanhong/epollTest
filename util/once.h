@@ -1,8 +1,6 @@
 #ifndef ONCE_H
 #define ONCE_H
 
-#include "event.h"
-
 typedef struct uv_cross_once_s {
   unsigned char ran;
   long event;
