@@ -33,7 +33,7 @@ int epoll_event_add(struct epoll_core * core,struct interface_core * connect);
 int epoll_event_add(struct epoll_core * core,struct connect_core * connect);
 void epoll_event_status(struct epoll_core * core,struct connect_core * connect,int status);
 int epoll_event_close(struct epoll_core * core,struct connect_core *connect);
-void epoll_event_delete(struct epoll_core * core,struct connect_core *connect);
+int epoll_event_delete(struct epoll_core * core,struct connect_core *connect);
 
 void errnoDump(const char * name);
 

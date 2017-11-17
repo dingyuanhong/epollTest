@@ -52,9 +52,7 @@ static void work_close(uv_work_t* req)
 	struct connect_core *connect = container_of(req,struct connect_core,work);
 	VASSERT(connect != NULL);
 	struct epoll_core * epoll = (struct epoll_core *)connect->ptr;
-	int ret = epoll_event_close(epoll,connect);
-	VASSERT(ret == 0);
-	connect->ret = ret;
+	VASSERT(epoll != NULL);
 }
 
 static void work_done(uv_work_t* req, int status)
@@ -78,9 +76,13 @@ static void close_done(uv_work_t* req, int status)
 	struct epoll_core * epoll = (struct epoll_core *)connect->ptr;
 	VASSERT(epoll != NULL);
 
-	int ret = connect->ret;
-	epoll_event_status(epoll,connect,ret);
-	cmpxchgl(&connect->lock,1,0);
+	int ret = epoll_event_delete(epoll,connect);
+	VASSERT(ret == 0);
+	if(ret != 0)
+	{
+		cmpxchgl(&connect->lock,1,0);
+		epoll_threadpool_close(epoll,connect);
+	}
 }
 
 void epoll_threadpool_read(struct epoll_core * epoll,struct connect_core * conn)

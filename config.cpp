@@ -43,7 +43,7 @@ void configInit(config_core * config)
 
 	config->timeout = 10;
 	config->concurrent = 1024;
-	config->threadpool = 0;
+	config->threadpool = 1;
 }
 
 void parseConfigFile(const char * file,config_core * config)

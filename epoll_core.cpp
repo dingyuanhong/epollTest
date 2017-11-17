@@ -148,7 +148,7 @@ int epoll_event_close(struct epoll_core * core,struct connect_core *connect)
 	return -1;
 }
 
-void epoll_event_delete(struct epoll_core * core,struct connect_core *connect)
+int epoll_event_delete(struct epoll_core * core,struct connect_core *connect)
 {
 	VASSERT(connect != NULL);
 	int ret = 0;
@@ -160,9 +160,10 @@ void epoll_event_delete(struct epoll_core * core,struct connect_core *connect)
 	{
 		connectFree(&connect);
 	}
+	return ret;
 }
 
-static void epoll_dispatch_read(struct epool_core *core,struct connect_core* connect)
+static void epoll_dispatch_read(struct epoll_core *core,struct connect_core* connect)
 {
 	if(core->conn_func.read != NULL)
 	{
@@ -174,7 +175,7 @@ static void epoll_dispatch_read(struct epool_core *core,struct connect_core* con
 	}
 }
 
-static void epoll_dispatch_write(struct epool_core *core,struct connect_core* connect)
+static void epoll_dispatch_write(struct epoll_core *core,struct connect_core* connect)
 {
 	if(core->conn_func.write != NULL)
 	{
@@ -186,7 +187,7 @@ static void epoll_dispatch_write(struct epool_core *core,struct connect_core* co
 	}
 }
 
-static void epoll_dispatch_delete(struct epool_core *core,struct connect_core* connect)
+static void epoll_dispatch_delete(struct epoll_core *core,struct connect_core* connect)
 {
 	if(core->conn_func.close != NULL)
 	{
