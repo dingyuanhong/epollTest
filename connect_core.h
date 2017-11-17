@@ -21,6 +21,11 @@ struct interface_core
 {
 	int type;
 	SOCKET fd;
+
+	uv_work_t work;
+	int events;
+	void * ptr;
+	long lock;
 };
 
 struct connect_core

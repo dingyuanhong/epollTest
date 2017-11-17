@@ -5,6 +5,7 @@
 
 struct epoll_func
 {
+	void (*accept)(struct epoll_core * epoll,struct interface_core * conn);
 	void (*read)(struct epoll_core * epoll,struct connect_core * conn);
 	void (*write)(struct epoll_core * epoll,struct connect_core * conn);
 	void (*close)(struct epoll_core * epoll,struct connect_core * conn);
@@ -28,6 +29,7 @@ void epoll_event_prepare(struct epoll_core * core);
 
 int epoll_event_process(struct epoll_core * core,long timeout);
 
+int epoll__accept(struct epoll_core * core,struct interface_core *interface_ptr);
 int epoll_event_accept(struct epoll_core * core,struct interface_core *interface_ptr);
 int epoll_event_add(struct epoll_core * core,struct interface_core * connect);
 int epoll_event_add(struct epoll_core * core,struct connect_core * connect);

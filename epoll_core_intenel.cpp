@@ -110,6 +110,7 @@ void epoll_internel_close(struct epoll_core * epoll,struct connect_core * conn)
 }
 
 struct epoll_func epoll_func_intenel = {
+	NULL,
 	epoll_internel_read,
 	epoll_internel_write,
 	epoll_internel_close

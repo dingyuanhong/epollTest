@@ -74,7 +74,7 @@ void keepalive(SOCKET socket,int keep)
 #else
 	int keepAlive = keep;//设定KeepAlive
 	int keepIdle = 3;//开始首次KeepAlive探测前的TCP空闭时间
-	int keepInterval = 5;//两次KeepAlive探测间的时间间隔
+	int keepInterval = 2;//两次KeepAlive探测间的时间间隔
 	int keepCount = 3;//判定断开前的KeepAlive探测次数
 	if (setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, (void*)&keepAlive, sizeof(keepAlive)) == -1)
 	{
@@ -162,6 +162,8 @@ struct interface_core * interfaceCreate()
 	if(core == NULL) return NULL;
 	core->type = 0;
 	core->fd = -1;
+	core->events = 0;
+	core->lock = 0;
 	return core;
 }
 

@@ -5,6 +5,38 @@
 #include "connect_core.h"
 #include "epoll_core_intenel.h"
 
+static void work_accept(uv_work_t* req)
+{
+	//uv_work_t* req = container_of(w, uv_work_t, work_req);
+	struct interface_core *connect = container_of(req,struct interface_core,work);
+	VASSERT(connect != NULL);
+	struct epoll_core * core = (struct epoll_core *)connect->ptr;
+	VASSERT(core != NULL);
+	while(1)
+	{
+		int ret = epoll__accept(core,connect);
+		if(ret != 1)
+		{
+			break;
+		}
+	}
+	int events = connect->events;
+	if(events & EPOLLONESHOT)
+	{
+		struct epoll_event event;
+		event.data.ptr = (void*)connect;
+		event.events = connect->events;
+		cmpxchgl(&connect->lock,1,0);
+		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,connect->fd,&event);
+		if(ret != 0)
+		{
+			VLOGE("epoll_ctl error.(%d)",errno);
+		}
+	}else{
+		cmpxchgl(&connect->lock,1,0);
+	}
+}
+
 static void work_read(uv_work_t* req)
 {
 	//uv_work_t* req = container_of(w, uv_work_t, work_req);
@@ -93,6 +125,16 @@ static void close_done(uv_work_t* req, int status)
 	}
 }
 
+void epoll_threadpool_accept(struct epoll_core * epoll,struct interface_core * conn)
+{
+	if(cmpxchgl(&conn->lock,0,1) == 0)
+	{
+		uv_queue_work(epoll->pool,&conn->work,work_accept,NULL);
+	}else{
+		VLOGD("accept task is running.");
+	}
+}
+
 void epoll_threadpool_read(struct epoll_core * epoll,struct connect_core * conn)
 {
 	if(cmpxchgl(&conn->lock,0,1) == 0)
@@ -125,6 +167,7 @@ void epoll_threadpool_close(struct epoll_core * epoll,struct connect_core * conn
 }
 
 struct epoll_func epoll_func_threadpool = {
+	epoll_threadpool_accept,
 	epoll_threadpool_read,
 	epoll_threadpool_write,
 	epoll_threadpool_close

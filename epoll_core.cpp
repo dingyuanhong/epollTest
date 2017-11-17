@@ -84,7 +84,7 @@ int epoll_event_add(struct epoll_core * core,struct connect_core * connect)
 	return ret;
 }
 
-int epoll_event_accept(struct epoll_core * core,struct interface_core *interface_ptr)
+int epoll__accept(struct epoll_core * core,struct interface_core *interface_ptr)
 {
 	VASSERT(interface_ptr != NULL);
 	int fd = interface_ptr->fd;
@@ -120,6 +120,34 @@ int epoll_event_accept(struct epoll_core * core,struct interface_core *interface
 	}else{
 		VLOGD("accept new connect(%d) %p",connect,connect_ptr);
 		return 1;
+	}
+	return 0;
+}
+
+int epoll_event_accept(struct epoll_core *core,struct interface_core * interface)
+{
+	VASSERT(core != NULL);
+	VASSERT(interface != NULL);
+	while(1)
+	{
+		int ret = epoll__accept(core,interface);
+		if(ret != 1)
+		{
+			break;
+		}
+	}
+	int events = interface->events;
+	if(events & EPOLLONESHOT)
+	{
+		struct epoll_event event;
+		event.data.ptr = (void*)interface;
+		event.events = interface->events;
+		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,interface->fd,&event);
+		if(ret != 0)
+		{
+			errnoDump("epoll_event_server EPOLLONESHOT epoll_ctl");
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -163,6 +191,18 @@ int epoll_event_delete(struct epoll_core * core,struct connect_core *connect)
 	return ret;
 }
 
+static int epoll_dispatch_accept(struct epoll_core *core,struct interface_core * interface)
+{
+	if(core->conn_func.accept != NULL)
+	{
+		core->conn_func.accept(core,interface);
+	}else
+	{
+		return epoll_event_accept(core,interface);
+	}
+	return 0;
+}
+
 static void epoll_dispatch_read(struct epoll_core *core,struct connect_core* connect)
 {
 	if(core->conn_func.read != NULL)
@@ -170,7 +210,7 @@ static void epoll_dispatch_read(struct epoll_core *core,struct connect_core* con
 		core->conn_func.read(core,connect);
 	}else
 	{
-		VLOGE("core->conn_func.read == NULL");
+		VLOGD("core->conn_func.read == NULL");
 		epoll_event_delete(core,connect);
 	}
 }
@@ -182,7 +222,7 @@ static void epoll_dispatch_write(struct epoll_core *core,struct connect_core* co
 		core->conn_func.write(core,connect);
 	}else
 	{
-		VLOGE("core->conn_func.write == NULL");
+		VLOGD("core->conn_func.write == NULL");
 		epoll_event_delete(core,connect);
 	}
 }
@@ -194,7 +234,7 @@ static void epoll_dispatch_delete(struct epoll_core *core,struct connect_core* c
 		core->conn_func.close(core,connect);
 	}else
 	{
-		VLOGE("core->conn_func.close == NULL");
+		VLOGD("core->conn_func.close == NULL");
 		epoll_event_delete(core,connect);
 	}
 }
@@ -278,25 +318,8 @@ int  epoll_event_server(struct epoll_core * core,struct epoll_event* event_ptr)
 	}
 	else
 	{
-		while(1)
-		{
-			int ret = epoll_event_accept(core,interface_ptr);
-			if(ret != 1)
-			{
-				break;
-			}
-		}
-
-		if(events & EPOLLONESHOT)
-		{
-			event_ptr->data.ptr = (void*)interface_ptr;
-			int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,interface_ptr->fd,event_ptr);
-			if(ret != 0)
-			{
-				errnoDump("epoll_event_server EPOLLONESHOT epoll_ctl");
-				return -1;
-			}
-		}
+		interface_ptr->events = events;
+		return epoll_dispatch_accept(core,interface_ptr);
 	}
 	return 0;
 }

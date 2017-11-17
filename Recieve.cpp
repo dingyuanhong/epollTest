@@ -50,6 +50,7 @@ int main()
 	struct interface_core * connect = interfaceCreate();
 	connect->type |= INTERFACE_TYPE_SERVER;
 	connect->fd = server;
+	connect->ptr = (void*)epoll_core;
 	epoll_event_prepare(epoll_core);
 
 	int ret = epoll_event_add(epoll_core,connect);

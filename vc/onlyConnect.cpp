@@ -61,7 +61,7 @@ int ConnectTest(const char * ip, int port)
 #define  MAX_BUFFER_READ  65535
 
 	while (true) {
-		//Sleep(1000);
+		Sleep(10);
 		char buffer[MAX_BUFFER_READ];
 		ret = send(sock, buffer, MAX_BUFFER_READ, 0);
 		if (ret == SOCKET_ERROR)
