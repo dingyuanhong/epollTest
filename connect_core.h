@@ -31,7 +31,7 @@ struct connect_core
 	uv_work_t work;
 	int events;
 	void * ptr;
-	long lock;
+	long lock;  //独占锁
 
 	int status;
 	int error;
@@ -56,5 +56,7 @@ void connectFree(struct connect_core ** connect_ptr);
 int connectRead(struct connect_core * connect);
 int connectWrite(struct connect_core * connect);
 int connectGetErrno(struct connect_core * connect);
+int connectShutdown(struct connect_core *connect,int howto);
+void connectDump(struct connect_core *connect);
 
 #endif

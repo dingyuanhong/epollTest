@@ -17,10 +17,10 @@ SRCS += $(wildcard $(SRC_PATH)/*.cpp)
 OBJS := $(SRCS:.cpp=.o)
 
 MODULE_OBJS := $(MODULES:.cpp=.o)
-SEND_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o epoll_core.o Sender.o
+SEND_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o epoll_core.o epoll_core_intenel.o epoll_core_threadpool.o Sender.o
 SEND_TARGET=sender
 
-RECIEVE_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o epoll_core.o Recieve.o
+RECIEVE_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o epoll_core.o epoll_core_intenel.o epoll_core_threadpool.o Recieve.o
 RECIEVE_TARGET=recieve
 
 #动态库

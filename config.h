@@ -12,10 +12,11 @@
 #endif
 
 typedef struct config_core{
-	int max_listen;					//监听数 
-	struct sockaddr * socket_ptr;	//服务端口 
-	int timeout;					//超时 
-	int concurrent;					//并发数 
+	int max_listen;					//监听数
+	struct sockaddr * socket_ptr;	//服务端口
+	int timeout;					//超时
+	int concurrent;					//并发数
+	int threadpool;					//使用线程池
 }config_core;
 
 config_core *getDefaultConfig();

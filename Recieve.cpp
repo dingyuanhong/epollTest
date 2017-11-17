@@ -43,10 +43,14 @@ int main()
 	struct epoll_core * epoll_core = process->epoll_ptr;
 	epoll_core->epoll = epoll;
 	epoll_core->event_count = config->concurrent;
-	epoll_core->pool = threadpool_create(&async);
+	if(config->threadpool)
+	{
+		epoll_core->pool = threadpool_create(&async);
+	}
 	struct interface_core * connect = interfaceCreate();
 	connect->type |= INTERFACE_TYPE_SERVER;
 	connect->fd = server;
+	epoll_event_prepare(epoll_core);
 
 	int ret = epoll_event_add(epoll_core,connect);
 	if(ret != -1)

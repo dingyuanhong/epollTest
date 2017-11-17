@@ -240,27 +240,25 @@ int connectRead(struct connect_core * connect)
 		connect->status |= CONNECT_STATUS_CLOSE;
 		return CONNECT_STATUS_CLOSE;
 	}else if(ret == -1){
-		if(ECONNRESET == errno)
+		if(errno == EAGAIN)
 		{
-			return CONNECT_STATUS_CLOSE;
+			return 0;
+		}
+		else if(ECONNRESET == errno)
+		{
+			// VLOGD("recv ECONNRESET socket.");
 		}
 		else
 		if(ENOTSOCK == errno)
 		{
 			// VLOGD("recv ENOTSOCK socket.");
-			return CONNECT_STATUS_CLOSE;
-		}
-		else
-		if(errno == EAGAIN)
-		{
-			return 0;
 		}
 		else{
 			VLOGE("recv(%d) error.(%d)",fd,errno);
-			connect->error = errno;
-			connect->status |= CONNECT_STATUS_CLOSE;
-			return CONNECT_STATUS_CLOSE;
 		}
+		connect->error = errno;
+		connect->status |= CONNECT_STATUS_CLOSE;
+		return CONNECT_STATUS_CLOSE;
 	}else if(ret != 65535)
 	{
 		// VLOGI("recv data 接受完成.(%d)",ret);
@@ -280,21 +278,21 @@ int connectWrite(struct connect_core * connect)
 	char buffer[65535];
 	ssize_t ret = send(fd,buffer,65535,MSG_DONTWAIT);
 	if(ret <= 0){
-		if(ECONNRESET == errno)
-		{
-			return CONNECT_STATUS_CLOSE;
-		}
-		else if(EAGAIN == errno)
+		if(EAGAIN == errno)
 		{
 			return CONNECT_STATUS_SEND;
+		}
+		else if(ECONNRESET == errno)
+		{
+			// VLOGD("send ECONNRESET socket.");
 		}
 		else
 		{
 			VLOGE("send error.(%d)",errno);
-			connect->error = errno;
-			connect->status |= CONNECT_STATUS_CLOSE;
-			return CONNECT_STATUS_CLOSE;
 		}
+		connect->error = errno;
+		connect->status |= CONNECT_STATUS_CLOSE;
+		return CONNECT_STATUS_CLOSE;
 	}else if(ret != 65535)
 	{
 		VLOGD("send data 未完全发送.(%d)",ret);
@@ -307,4 +305,32 @@ int connectGetErrno(struct connect_core * connect)
 {
 	if(connect == NULL) return 0;
 	return connect->error;
+}
+
+int connectShutdown(struct connect_core *connect,int howto)
+{
+	VASSERT(connect != NULL);
+	int fd = connect->fd;
+
+	int ret = shutdown(fd,howto);
+	if(ret != 0)
+	{
+		if(errno == ENOTCONN)
+		{
+			return 0;
+		}else{
+			VLOGE("shutdown error:%d",errno);
+		}
+		return -1;
+	}else{
+		VLOGI("(%d)shutdown success",fd);
+	}
+	return 0;
+}
+
+void connectDump(struct connect_core *connect)
+{
+	VASSERT(connect != NULL);
+	int fd = connect->fd;
+	VLOGI("events:%x fd:%d  ptr:%p status:%d",connect->events,fd,connect,connect->status);
 }
