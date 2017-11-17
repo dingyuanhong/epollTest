@@ -323,7 +323,7 @@ int connectShutdown(struct connect_core *connect,int howto)
 		}
 		return -1;
 	}else{
-		VLOGI("(%d)shutdown success",fd);
+		VLOGD("(%d)shutdown success",fd);
 	}
 	return 0;
 }
@@ -332,5 +332,5 @@ void connectDump(struct connect_core *connect)
 {
 	VASSERT(connect != NULL);
 	int fd = connect->fd;
-	VLOGI("events:%x fd:%d  ptr:%p status:%d",connect->events,fd,connect,connect->status);
+	VLOGD("events:%x fd:%d  ptr:%p status:%d",connect->events,fd,connect,connect->status);
 }

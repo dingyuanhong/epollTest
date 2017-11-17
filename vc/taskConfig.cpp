@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include "taskConfig.h"
-#include "log.h"
+#include "util/log.h"
 
 int parseConfig(Config *config, int argc, char* argv[])
 {

@@ -118,13 +118,13 @@ int epoll_event_accept(struct epoll_core * core,struct interface_core *interface
 		close(connect);
 		return -1;
 	}else{
-		VLOGI("accept new connect(%d) %p",connect,connect_ptr);
+		VLOGD("accept new connect(%d) %p",connect,connect_ptr);
 		return 1;
 	}
 	return 0;
 }
 
-void epoll_event_close(struct epoll_core * core,struct connect_core *connect)
+int epoll_event_close(struct epoll_core * core,struct connect_core *connect)
 {
 	VASSERT(core != NULL);
 	VASSERT(connect != NULL);
@@ -139,10 +139,62 @@ void epoll_event_close(struct epoll_core * core,struct connect_core *connect)
 		VASSERTA(ret == 0,"close(%d) error(%d)",fd,errno);
 		if(ret == 0)
 		{
-			connectFree((struct connect_core**)(&connect));
+			connect->fd = -1;
 		}
+		return ret;
 	}else{
 		VLOGE("epoll_ctl error(%d)",errno);
+	}
+	return -1;
+}
+
+void epoll_event_delete(struct epoll_core * core,struct connect_core *connect)
+{
+	VASSERT(connect != NULL);
+	int ret = 0;
+	if(connect->fd != -1)
+	{
+		ret = epoll_event_close(core,connect);
+	}
+	if(ret == 0)
+	{
+		connectFree(&connect);
+	}
+}
+
+static void epoll_dispatch_read(struct epool_core *core,struct connect_core* connect)
+{
+	if(core->conn_func.read != NULL)
+	{
+		core->conn_func.read(core,connect);
+	}else
+	{
+		VLOGE("core->conn_func.read == NULL");
+		epoll_event_delete(core,connect);
+	}
+}
+
+static void epoll_dispatch_write(struct epool_core *core,struct connect_core* connect)
+{
+	if(core->conn_func.write != NULL)
+	{
+		core->conn_func.write(core,connect);
+	}else
+	{
+		VLOGE("core->conn_func.write == NULL");
+		epoll_event_delete(core,connect);
+	}
+}
+
+static void epoll_dispatch_delete(struct epool_core *core,struct connect_core* connect)
+{
+	if(core->conn_func.close != NULL)
+	{
+		core->conn_func.close(core,connect);
+	}else
+	{
+		VLOGE("core->conn_func.close == NULL");
+		epoll_event_delete(core,connect);
 	}
 }
 
@@ -163,8 +215,8 @@ void epoll_event_status(struct epoll_core * core,struct connect_core *connect,in
 	if(status & CONNECT_STATUS_CLOSE)
 	{
 		// VLOGD("CONNECT_STATUS_CLOSE(%d) events:%x",fd,event_ptr->events);
-		connectShutdown(connect,SHUT_RD);
-		epoll_event_close(core,connect);
+
+		epoll_dispatch_delete(core,connect);
 	}else if(status & CONNECT_STATUS_SEND)
 	{
 		// VLOGD("CONNECT_STATUS_SEND(%d) events:%x",fd,event_ptr->events);
@@ -194,7 +246,7 @@ void epoll_event_status(struct epoll_core * core,struct connect_core *connect,in
 		VLOGD("CONNECT_STATUS_CONTINUE(%d) events:%x",fd,event_ptr->events);
 	}else if(status == 0)
 	{
-		VLOGD("status == 0 (%d) events:%x",fd,event_ptr->events);
+		// VLOGD("status == 0 (%d) events:%x",fd,event_ptr->events);
 		if(event_ptr->events & EPOLLONESHOT)
 		{
 			event_ptr->events &= ~EPOLLOUT;
@@ -221,6 +273,7 @@ int  epoll_event_server(struct epoll_core * core,struct epoll_event* event_ptr)
 	if((events & EPOLLRDHUP) || (events & EPOLLHUP) || (events & EPOLLERR))
 	{
 		VLOGE("server is in error.");
+		return -1;
 	}
 	else
 	{
@@ -240,6 +293,7 @@ int  epoll_event_server(struct epoll_core * core,struct epoll_event* event_ptr)
 			if(ret != 0)
 			{
 				errnoDump("epoll_event_server EPOLLONESHOT epoll_ctl");
+				return -1;
 			}
 		}
 	}
@@ -265,28 +319,14 @@ void epoll_event_connect(struct epoll_core * core,struct epoll_event* event_ptr)
 		VLOGD("EPOLLRDHUP trigger.");
 		connectDump(connect);
 		//主动请求关闭
-		if(core->conn_func.close != NULL)
-		{
-			core->conn_func.close(core,connect);
-		}else
-		{
-			VLOGE("core->conn_func.close == NULL");
-			epoll_event_close(core,connect);
-		}
+		epoll_dispatch_delete(core,connect);
 	}
 	else if(events & EPOLLHUP)
 	{
 		VLOGD("EPOLLHUP trigger.");
 		connectDump(connect);
 		//连接断开
-		if(core->conn_func.close != NULL)
-		{
-			core->conn_func.close(core,connect);
-		}else
-		{
-			VLOGE("core->conn_func.close == NULL");
-			epoll_event_close(core,connect);
-		}
+		epoll_dispatch_delete(core,connect);
 	}
 	else if(events & EPOLLERR)
 	{
@@ -294,42 +334,22 @@ void epoll_event_connect(struct epoll_core * core,struct epoll_event* event_ptr)
 		//连接异常
 		connectDump(connect);
 		//连接断开
-		if(core->conn_func.close != NULL)
-		{
-			core->conn_func.close(core,connect);
-		}else
-		{
-			VLOGE("core->conn_func.close == NULL");
-			epoll_event_close(core,connect);
-		}
+		epoll_dispatch_delete(core,connect);
 	}
 	else if(events & EPOLLIN)
 	{
-		if(core->conn_func.read != NULL)
-		{
-			core->conn_func.read(core,connect);
-		}else
-		{
-			VLOGE("core->conn_func.read == NULL");
-			epoll_event_close(core,connect);
-		}
+		epoll_dispatch_read(core,connect);
 	}
 	else if(events & EPOLLOUT)
 	{
-		if(core->conn_func.write != NULL)
-		{
-			core->conn_func.write(core,connect);
-		}else
-		{
-			VLOGE("core->conn_func.write == NULL");
-			epoll_event_close(core,connect);
-		}
+		epoll_dispatch_write(core,connect);
 	}
 	else if(events & EPOLLPRI)
 	{
-		VLOGD("EPOLLET trigger.");
+		VLOGD("EPOLLPRI trigger.");
 		//带外数据
 		connectDump(connect);
+		epoll_dispatch_delete(core,connect);
 	}
 	else if(events & EPOLLET)
 	{
@@ -342,11 +362,12 @@ void epoll_event_connect(struct epoll_core * core,struct epoll_event* event_ptr)
 	// 	VLOGD("EPOLLNVAL trigger.");
 	// 	//文件描述符未打开
 	// 	connectDump(EPOLLNVAL,connect);
+	// 	epoll_dispatch_delete(core,connect);
 	// }
 	else{
 		VLOGE("unknown events(%x) trigger",events);
 		connectDump(connect);
-		epoll_event_close(core,connect);
+		epoll_dispatch_delete(core,connect);
 	}
 }
 

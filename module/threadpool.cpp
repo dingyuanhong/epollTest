@@ -29,6 +29,8 @@ void uv_async_done(uv_async_event_t* handle) {
 
 void uv_async_complited(uv_async_event_t * async,struct uv__work* w)
 {
+	VASSERT(async != NULL);
+	VASSERT(w != NULL);
 	if(async == NULL)
 	{
 		VLOGE("uv_threadpool_s->async_complete is NULL.");
@@ -182,6 +184,7 @@ static void init_once(void* param) {
 		abort();
 	}
 
+	VLOGI("init nthreads:%d,%p",pool->nthreads,pool->threads);
 	pool->initialized = 1;
 }
 
@@ -200,7 +203,11 @@ int uv_queue_work(uv_threadpool_s* pool,
                   uv_work_cb work_cb,
                   uv_after_work_cb after_work_cb) {
 	if (work_cb == 0)
+	{
+		VLOGE("work_cb == NULL.");
 		return UV_EINVAL;
+	}
+
 
 	req->work_cb = work_cb;
 	req->after_work_cb = after_work_cb;
@@ -211,6 +218,7 @@ int uv_queue_work(uv_threadpool_s* pool,
 uv_threadpool_t *threadpool_create(uv_async_event_t *async)
 {
 	uv_threadpool_t * pool = (uv_threadpool_t*)uv_malloc(sizeof(uv_threadpool_t));
+	VASSERT(pool != NULL);
 	if(pool == NULL) return pool;
 	uv_memset(pool,0,sizeof(uv_threadpool_t));
 

@@ -106,11 +106,11 @@ void epoll_internel_write(struct epoll_core * epoll,struct connect_core * conn)
 
 void epoll_internel_close(struct epoll_core * epoll,struct connect_core * conn)
 {
-	epoll_event_close(epoll,conn);
+	epoll_event_delete(epoll,conn);
 }
 
 struct epoll_func epoll_func_intenel = {
 	epoll_internel_read,
 	epoll_internel_write,
-	epoll_internel_close
+	epoll_event_delete
 };
