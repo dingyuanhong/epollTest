@@ -10,6 +10,8 @@ static void work_read(uv_work_t* req)
 	//uv_work_t* req = container_of(w, uv_work_t, work_req);
 	struct connect_core *connect = container_of(req,struct connect_core,work);
 	VASSERT(connect != NULL);
+	struct epoll_core * epoll = (struct epoll_core *)connect->ptr;
+	VASSERT(epoll != NULL);
 	int ret = 0;
 	while(true)
 	{
@@ -24,6 +26,8 @@ static void work_read(uv_work_t* req)
 		break;
 	}
 	connect->ret = ret;
+	cmpxchgl(&connect->lock,1,0);
+	epoll_event_status(epoll,connect,ret);
 }
 
 static void work_write(uv_work_t* req)
@@ -31,6 +35,8 @@ static void work_write(uv_work_t* req)
 	//uv_work_t* req = container_of(w, uv_work_t, work_req);
 	struct connect_core *connect = container_of(req,struct connect_core,work);
 	VASSERT(connect != NULL);
+	struct epoll_core * epoll = (struct epoll_core *)connect->ptr;
+	VASSERT(epoll != NULL);
 	int ret = 0;
 	while(true)
 	{
@@ -45,6 +51,8 @@ static void work_write(uv_work_t* req)
 		break;
 	}
 	connect->ret = ret;
+	cmpxchgl(&connect->lock,1,0);
+	epoll_event_status(epoll,connect,ret);
 }
 
 static void work_close(uv_work_t* req)
@@ -64,8 +72,8 @@ static void work_done(uv_work_t* req, int status)
 	VASSERT(epoll != NULL);
 
 	int ret = connect->ret;
-	epoll_event_status(epoll,connect,ret);
 	cmpxchgl(&connect->lock,1,0);
+	epoll_event_status(epoll,connect,ret);
 }
 
 static void close_done(uv_work_t* req, int status)
@@ -89,7 +97,7 @@ void epoll_threadpool_read(struct epoll_core * epoll,struct connect_core * conn)
 {
 	if(cmpxchgl(&conn->lock,0,1) == 0)
 	{
-		uv_queue_work(epoll->pool,&conn->work,work_read,work_done);
+		uv_queue_work(epoll->pool,&conn->work,work_read,NULL);
 	}else{
 		VLOGD("read task is running.");
 	}
@@ -99,7 +107,7 @@ void epoll_threadpool_write(struct epoll_core * epoll,struct connect_core * conn
 {
 	if(cmpxchgl(&conn->lock,0,1) == 0)
 	{
-		uv_queue_work(epoll->pool,&conn->work,work_write,work_done);
+		uv_queue_work(epoll->pool,&conn->work,work_write,NULL);
 	}else{
 		VLOGD("write task is running.");
 	}

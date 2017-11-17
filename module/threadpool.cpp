@@ -29,13 +29,18 @@ void uv_async_done(uv_async_event_t* handle) {
 
 void uv_async_complited(uv_async_event_t * async,struct uv__work* w)
 {
-	VASSERT(async != NULL);
 	VASSERT(w != NULL);
+	if (w->done == NULL)
+	{
+		return;
+	}
+	VASSERT(async != NULL);
 	if(async == NULL)
 	{
 		VLOGE("uv_threadpool_s->async_complete is NULL.");
 		return;
 	}
+
 	uv_mutex_lock(&async->wq_mutex);
 	if(w->work != uv__cancelled){
 		w->work = NULL;  /* Signal uv_cancel() that the work req is done executing. */
@@ -208,10 +213,15 @@ int uv_queue_work(uv_threadpool_s* pool,
 		return UV_EINVAL;
 	}
 
-
 	req->work_cb = work_cb;
 	req->after_work_cb = after_work_cb;
-	uv__work_submit(pool, &req->work_req, uv__queue_work, uv__queue_done);
+	if(after_work_cb == NULL)
+	{
+		uv__work_submit(pool, &req->work_req, uv__queue_work, NULL);
+	}else{
+		uv__work_submit(pool, &req->work_req, uv__queue_work, uv__queue_done);
+	}
+
 	return 0;
 }
 
