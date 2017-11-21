@@ -12,7 +12,7 @@
 #include "epoll_core_threadpool.h"
 #include "process_core.h"
 
-#ifdef __linuc__
+#ifdef __linux__
 #include <sys/epoll.h>
 
 struct epoll_core * epollCreate()
@@ -24,7 +24,7 @@ struct epoll_core * epollCreate()
 
 int epoll_coreCreate(struct epoll_core * core,int concurrent)
 {
-	if(core == NULL) return;
+	if(core == NULL) return -1;
 	int epoll = epoll_create(concurrent);
 	if(epoll == -1){
 		VLOGE("epoll create error(%d)\n",errno);
@@ -36,8 +36,8 @@ int epoll_coreCreate(struct epoll_core * core,int concurrent)
 	return 0;
 }
 
-int epoll_coreDelete(struct epoll_core * core)
-{	
+void epoll_coreDelete(struct epoll_core * core)
+{
 	if(core == NULL) return;
 	if(core->epoll != -1)
 	{

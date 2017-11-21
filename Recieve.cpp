@@ -10,6 +10,7 @@
 #include "config.h"
 #include "connect_core.h"
 #include "process_core.h"
+#include "epoll_core.h"
 
 int main()
 {
