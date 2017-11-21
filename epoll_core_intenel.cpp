@@ -1,9 +1,11 @@
-#include <sys/epoll.h>
 #include "epoll_core_intenel.h"
+#include "util/staticUtil.h"
 #include "util/log.h"
 #include "connect_core.h"
 #include "epoll_core.h"
 
+#ifdef __linux__
+#include <sys/epoll.h>
 const char * getEPOLLName(int events)
 {
 	if(events & EPOLLIN)
@@ -115,3 +117,4 @@ struct epoll_func epoll_func_intenel = {
 	epoll_internel_write,
 	epoll_internel_close
 };
+#endif

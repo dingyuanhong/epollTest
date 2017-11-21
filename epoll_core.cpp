@@ -1,4 +1,3 @@
-#include <sys/epoll.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -9,15 +8,42 @@
 #include "config.h"
 #include "epoll_core.h"
 #include "connect_core.h"
-#include "process_core.h"
 #include "epoll_core_intenel.h"
 #include "epoll_core_threadpool.h"
+#include "process_core.h"
+
+#ifdef __linuc__
+#include <sys/epoll.h>
 
 struct epoll_core * epollCreate()
 {
 	struct epoll_core *core = (struct epoll_core*)malloc(sizeof(struct epoll_core));
 	epollInit(core);
 	return core;
+}
+
+int epoll_coreCreate(struct epoll_core * core,int concurrent)
+{
+	if(core == NULL) return;
+	int epoll = epoll_create(concurrent);
+	if(epoll == -1){
+		VLOGE("epoll create error(%d)\n",errno);
+		return -1;
+	}else
+	{
+		core->epoll = epoll;
+	}
+	return 0;
+}
+
+int epoll_coreDelete(struct epoll_core * core)
+{	
+	if(core == NULL) return;
+	if(core->epoll != -1)
+	{
+		close(core->epoll);
+	}
+	core->epoll = -1;
 }
 
 void epollInit(struct epoll_core * core)
@@ -446,3 +472,5 @@ int epoll_event_process(struct epoll_core * core,long timeout)
 	}
 	return accept_event_count;
 }
+
+#endif

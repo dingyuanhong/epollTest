@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdlib.h>
+#include "util/staticUtil.h"
 #ifdef _WIN32
 #include <WinSock2.h>
 //#include <Ws2def.h>
@@ -15,10 +16,11 @@
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <sys/epoll.h>
 #include <fcntl.h>
 #include <netinet/tcp.h>
+#ifndef __MAC__
 #include <error.h>
+#endif
 #endif
 
 #include "util/log.h"
@@ -90,6 +92,8 @@ void keepalive(SOCKET socket,int keep)
 	{
 		VLOGE("setsockopt SO_KEEPALIVE error.(%d)", errno);
 	}
+	#ifdef __MAC__
+	#else
 	if (setsockopt(socket, SOL_TCP, TCP_KEEPIDLE, (void *)&keepIdle, sizeof(keepIdle)) == -1)
 	{
 		VLOGE("setsockopt TCP_KEEPIDLE error.(%d)", errno);
@@ -102,6 +106,7 @@ void keepalive(SOCKET socket,int keep)
 	{
 		VLOGE("setsockopt TCP_KEEPCNT error.(%d)", errno);
 	}
+	#endif
 #endif
 }
 

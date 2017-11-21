@@ -1,12 +1,10 @@
 #ifndef PROCESS_CORE_H
 #define PROCESS_CORE_H
 
-#include "epoll_core.h"
-
 struct process_core
 {
 	bool signal_term_stop;			//终止信号
-	struct epoll_core  *epoll_ptr;	//epoll句柄
+	void  *epoll_ptr;				//epoll句柄
 };
 
 #define VOFFSET(TYPE,MEMBER) ((long)&(((TYPE*)0)->MEMBER))
@@ -23,6 +21,7 @@ void threadBindCPU(int cpuid);
 struct process_core * processGetDefault();
 
 void processInit(struct process_core * core);
+void processSet(struct process_core * core,void * ptr);
 void processFree(struct process_core ** core_ptr);
 
 #endif

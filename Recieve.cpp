@@ -1,6 +1,5 @@
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <signal.h>
@@ -22,12 +21,6 @@ int main()
 	VASSERT(config != NULL);
 	configDump(config);
 
-	int epoll = epoll_create(config->max_listen);
-	if(epoll == -1){
-		VLOGE("epoll create error(%d)\n",errno);
-		return -1;
-	}
-
 	int server = createServerConnect(config->socket_ptr,config->max_listen);
 	if(server == -1)
 	{
@@ -40,13 +33,16 @@ int main()
 	uv_async_event_t async;
 	uv_async_init(&async);
 
-	struct epoll_core * epoll_core = process->epoll_ptr;
-	epoll_core->epoll = epoll;
+	struct epoll_core * epoll_core = epollCreate();;
+	epoll_coreCreate(epoll_core,config->max_listen);
 	epoll_core->event_count = config->concurrent;
 	if(config->threadpool)
 	{
 		epoll_core->pool = threadpool_create(&async);
 	}
+
+	processSet(process,epoll_core);
+
 	struct interface_core * connect = interfaceCreate();
 	connect->type |= INTERFACE_TYPE_SERVER;
 	connect->fd = server;
@@ -60,7 +56,7 @@ int main()
 		VLOGI("epoll:%d pool:%p",epoll_core->epoll,epoll_core->pool);
 		while(!process->signal_term_stop)
 		{
-			epoll_event_process(process->epoll_ptr,config->timeout);
+			epoll_event_process(epoll_core,config->timeout);
 			uv_async_done(&async);
 		}
 	}else{
@@ -69,6 +65,8 @@ int main()
 	interfaceFree(&connect);
 
 	VLOGI("server stop.");
+	epoll_coreDelete(epoll_core);
+	epollFree(&epoll_core);
 	processFree(&process);
 	configFree(&config);
 	return 1;

@@ -28,6 +28,20 @@
 #include <sys/sem.h>
 #include <semaphore.h>
 
+#if defined(__APPLE__) && defined(__MACH__)
+#include "TargetConditionals.h"
+#ifdef TARGET_OS_MAC
+typedef struct sem_mac_s{
+  sem_t *sem;
+  char * name; 
+}sem_mac_t;
+# define UV_PLATFORM_SEM_T sem_mac_t
+#define clock_t clockid_t
+#define CLOCK_MONOTONIC_COARSE CLOCK_MONOTONIC
+#define USE_USERDEFINED_BARRIER
+#endif
+#endif
+
 #ifndef UV_PLATFORM_SEM_T
 # define UV_PLATFORM_SEM_T sem_t
 #endif
@@ -41,7 +55,17 @@ typedef pthread_rwlock_t uv_rwlock_t;
 typedef UV_PLATFORM_SEM_T uv_sem_t;
 typedef pthread_cond_t uv_cond_t;
 typedef pthread_key_t uv_key_t;
+#ifndef USE_USERDEFINED_BARRIER
 typedef pthread_barrier_t uv_barrier_t;
+#else
+typedef struct {
+  unsigned int n;
+  unsigned int count;
+  uv_mutex_t mutex;
+  uv_sem_t turnstile1;
+  uv_sem_t turnstile2;
+} uv_barrier_t;
+#endif
 
 #else
 

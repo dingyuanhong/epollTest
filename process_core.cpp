@@ -4,9 +4,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <sched.h>
-#include <sys/sysinfo.h>
 #include <pthread.h>
 #include "util/log.h"
+#include "util/staticUtil.h"
 
 static void handle_signal_term(int sig)
 {
@@ -19,33 +19,6 @@ void processSignal(){
 	signal(SIGTERM , handle_signal_term);
 	signal(SIGINT , handle_signal_term);
 	signal(SIGQUIT , handle_signal_term);
-}
-
-//进程绑定cpu
-void processBindCPU(int cpuid)
-{
-	cpu_set_t mask;
-	CPU_ZERO(&mask);
-    CPU_SET(cpuid, &mask);
-    if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
-        VLOGE("sched_setaffinity error(%d)",errno);
-    }
-}
-
-//线程绑定cpu
-void threadBindCPU(int cpuid)
-{
-#ifdef _WIN32
-	SetThreadAffinityMask(GetCurrentThread(),cpuid);
-#else
-	cpu_set_t mask;
-	CPU_ZERO(&mask);
-	CPU_SET(cpuid, &mask);
-
-	if (pthread_setaffinity_np(pthread_self(), sizeof(mask),&mask) < 0) {
-		VLOGE("pthread_setaffinity_np error(%d)",errno);
-	}
-#endif
 }
 
 static struct process_core static_core;
@@ -63,8 +36,14 @@ struct process_core * processGetDefault()
 void processInit(struct process_core * core)
 {
 	if(core == NULL) return;
-	core->epoll_ptr = epollCreate();
+	core->epoll_ptr = NULL;
 	core->signal_term_stop = false;
+}
+
+void processSet(struct process_core * core,void * ptr)
+{
+	VASSERT(core != NULL);
+	core->epoll_ptr = ptr;
 }
 
 void processFree(struct process_core ** core_ptr)
@@ -73,7 +52,7 @@ void processFree(struct process_core ** core_ptr)
 	struct process_core * core = *core_ptr;
 	if(core == NULL) return;
 
-	epollFree(&core->epoll_ptr);
-
+	//epollFree(&core->epoll_ptr);
+	core->epoll_ptr = NULL;
 	*core_ptr = NULL;
 }

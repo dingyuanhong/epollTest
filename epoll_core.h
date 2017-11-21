@@ -24,6 +24,9 @@ struct epoll_core * epollCreate();
 
 void epollInit(struct epoll_core * core);
 
+int epoll_coreCreate(struct epoll_core * core,int concurrent);
+int epoll_coreDelete(struct epoll_core * core);
+
 void epollFree(struct epoll_core ** core_ptr);
 void epoll_event_prepare(struct epoll_core * core);
 

@@ -17,7 +17,7 @@ SRCS += $(wildcard $(SRC_PATH)/*.cpp)
 OBJS := $(SRCS:.cpp=.o)
 
 MODULE_OBJS := $(MODULES:.cpp=.o)
-SEND_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o epoll_core.o epoll_core_intenel.o epoll_core_threadpool.o Sender.o
+SEND_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o Sender.o
 SEND_TARGET=sender
 
 RECIEVE_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o epoll_core.o epoll_core_intenel.o epoll_core_threadpool.o Recieve.o
@@ -81,12 +81,10 @@ endif
 $(warning $(OBJS))
 
 #操作命令
-all:clean source build
+all:clean build
 
 $(OBJS):%.o:%.cpp
 	$(CXX) $(CFLAGS) -c $^ -o $@
-
-source:$(OBJS)
 
 build_send:$(SEND_OBJS)
 	$(CXX) $(LFLAGS) -o $(SEND_TARGET) $(SEND_OBJS) $(LDFLAGS)
@@ -94,7 +92,7 @@ build_send:$(SEND_OBJS)
 build_recieve:$(RECIEVE_OBJS)
 	$(CXX) $(LFLAGS) -o $(RECIEVE_TARGET) $(RECIEVE_OBJS) $(LDFLAGS)
 
-build:build_recieve build_send
+build:build_send build_recieve
 	$(RM) $(OBJS)
 
 clean:

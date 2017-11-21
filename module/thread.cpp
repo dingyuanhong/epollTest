@@ -20,13 +20,15 @@
  */
 
 #include "thread.h"
-
+#include <stdlib.h>
+#include <stdio.h>
 #ifndef _WIN32
 
 #include <pthread.h>
 #include <assert.h>
 #include <errno.h>
 
+#include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>  /* getrlimit() */
 #include <unistd.h>  /* getpagesize() */
@@ -47,7 +49,7 @@ typedef enum {
 } uv_clocktype_t;
 
 static uint64_t uv__hrtime(uv_clocktype_t type) {
-	static clock_t fast_clock_id = -1;
+	static clock_t fast_clock_id = (clock_t)-1;
 	struct timespec t;
 	clock_t clock_id;
 
@@ -59,7 +61,7 @@ static uint64_t uv__hrtime(uv_clocktype_t type) {
 	/* TODO(bnoordhuis) Use CLOCK_MONOTONIC_COARSE for UV_CLOCK_PRECISE
 	* when it has microsecond granularity or better (unlikely).
 	*/
-	if (type == UV_CLOCK_FAST && fast_clock_id == -1) {
+	if (type == UV_CLOCK_FAST && fast_clock_id == (clock_t)-1) {
 		if (clock_getres(CLOCK_MONOTONIC_COARSE, &t) == 0 &&
 			t.tv_nsec <= 1 * 1000 * 1000) {
 			fast_clock_id = CLOCK_MONOTONIC_COARSE;
@@ -257,7 +259,96 @@ void uv_once(uv_once_t* guard, void (*callback)(void)) {
 }
 
 #if defined(__APPLE__) && defined(__MACH__)
+#ifdef TARGET_OS_MAC
+int uv_sem_init( uv_sem_t* sem, unsigned int value )
+{
+  long ptr = (long)sem;
+  sem->name = (char*)malloc(9);
+  sprintf(sem->name,"%ld",ptr);
+  sem->sem = sem_open( sem->name, O_CREAT, 0644, value );
+    
+  if( sem->sem == SEM_FAILED )
+  {
+    switch( errno )
+    {
+      case EEXIST:
+        // VLOGE("sem_open:EEXIST(%s)",sem->name);
+        break;
+        
+      default:
+        // VLOGE("sem_open:%d",errno);
+        break;
+    }
+    return -EINVAL;
+  }
+    
+  return 0;
+}
 
+
+int uv_sem__delete(const char * name)
+{
+    int ret = sem_unlink(name);
+    if (ret == -1) {
+        // VLOGE("sem_unlink:%d",errno);
+        return -1;
+    }
+    return 0;
+}
+
+void uv_sem_destroy( uv_sem_t * sem )
+{
+  int ret = sem_close( sem->sem );
+  // VASSERT(sem->name != NULL);
+  uv_sem__delete(sem->name);
+  free(sem->name);
+  if( ret == -1 )
+  {
+    switch( errno )
+    {
+            case EINVAL:
+                // VLOGE("sem_close:EINVAL");
+                break;
+                
+            default:
+                // VLOGE("sem_close:%d",errno);
+                break;
+    }
+  }
+}
+
+void uv_sem_post( uv_sem_t * sem )
+{
+  int ret = sem_post( sem->sem );
+  if(ret != 0)
+  {
+    // VLOGE("sem_post:%d",errno);
+  }
+}
+
+void uv_sem_wait( uv_sem_t * sem )
+{
+  int ret = sem_wait( sem->sem );
+  if(ret != 0)
+  {
+    // VLOGE("sem_wait:%d",errno);
+  }
+}
+
+int uv_sem_trywait( uv_sem_t * sem )
+{
+  int retErr = sem_trywait( sem->sem );
+  if( retErr == -1 )
+  {
+    if( errno != EAGAIN )
+    {
+      // VLOGE("sem_trywait:%d",errno);
+    }
+    return -1;
+  }
+  return 0;
+}
+#else
 int uv_sem_init(uv_sem_t* sem, unsigned int value) {
   kern_return_t err;
 
@@ -314,7 +405,7 @@ int uv_sem_trywait(uv_sem_t* sem) {
   abort();
   return -EINVAL;  /* Satisfy the compiler. */
 }
-
+#endif
 #elif defined(__MVS__)
 
 int uv_sem_init(uv_sem_t* sem, unsigned int value) {
@@ -571,7 +662,7 @@ int uv_cond_timedwait(uv_cond_t* cond, uv_mutex_t* mutex, uint64_t timeout) {
   return -EINVAL;  /* Satisfy the compiler. */
 }
 
-
+#ifndef USE_USERDEFINED_BARRIER
 int uv_barrier_init(uv_barrier_t* barrier, unsigned int count) {
   return -pthread_barrier_init(barrier, NULL, count);
 }
@@ -589,7 +680,7 @@ int uv_barrier_wait(uv_barrier_t* barrier) {
     abort();
   return r == PTHREAD_BARRIER_SERIAL_THREAD;
 }
-
+#endif
 
 int uv_key_create(uv_key_t* key) {
   return -pthread_key_create(key, NULL);
@@ -612,4 +703,68 @@ void uv_key_set(uv_key_t* key, void* value) {
     abort();
 }
 
+#endif
+
+#ifdef USE_USERDEFINED_BARRIER
+int uv_barrier_init(uv_barrier_t* barrier, unsigned int count) {
+  int err;
+
+  barrier->n = count;
+  barrier->count = 0;
+
+  err = uv_mutex_init(&barrier->mutex);
+  if (err)
+    return err;
+
+  err = uv_sem_init(&barrier->turnstile1, 0);
+  if (err)
+    goto error2;
+
+  err = uv_sem_init(&barrier->turnstile2, 1);
+  if (err)
+    goto error;
+
+  return 0;
+
+error:
+  uv_sem_destroy(&barrier->turnstile1);
+error2:
+  uv_mutex_destroy(&barrier->mutex);
+  return err;
+
+}
+
+
+void uv_barrier_destroy(uv_barrier_t* barrier) {
+  uv_sem_destroy(&barrier->turnstile2);
+  uv_sem_destroy(&barrier->turnstile1);
+  uv_mutex_destroy(&barrier->mutex);
+}
+
+
+int uv_barrier_wait(uv_barrier_t* barrier) {
+  int serial_thread;
+
+  uv_mutex_lock(&barrier->mutex);
+  if (++barrier->count == barrier->n) {
+    uv_sem_wait(&barrier->turnstile2);
+    uv_sem_post(&barrier->turnstile1);
+  }
+  uv_mutex_unlock(&barrier->mutex);
+
+  uv_sem_wait(&barrier->turnstile1);
+  uv_sem_post(&barrier->turnstile1);
+
+  uv_mutex_lock(&barrier->mutex);
+  serial_thread = (--barrier->count == 0);
+  if (serial_thread) {
+    uv_sem_wait(&barrier->turnstile1);
+    uv_sem_post(&barrier->turnstile2);
+  }
+  uv_mutex_unlock(&barrier->mutex);
+
+  uv_sem_wait(&barrier->turnstile2);
+  uv_sem_post(&barrier->turnstile2);
+  return serial_thread;
+}
 #endif
