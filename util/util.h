@@ -7,4 +7,6 @@ int getCPUCount();
 int64_t getMemoryTotal();
 int64_t getMemoryUsage();
 
+void threadAffinityCPU(int cpuid);
+
 #endif

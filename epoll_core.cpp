@@ -118,7 +118,7 @@ int epoll__accept(struct epoll_core * core,struct interface_core *interface_ptr)
 		close(connect);
 		return -1;
 	}else{
-		VLOGD("accept new connect(%d) %p",connect,connect_ptr);
+		// VLOGD("accept new connect(%d) %p",connect,connect_ptr);
 		return 1;
 	}
 	return 0;
@@ -234,7 +234,7 @@ static void epoll_dispatch_delete(struct epoll_core *core,struct connect_core* c
 		core->conn_func.close(core,connect);
 	}else
 	{
-		VLOGD("core->conn_func.close == NULL");
+		// VLOGD("core->conn_func.close == NULL");
 		epoll_event_delete(core,connect);
 	}
 }
@@ -255,7 +255,7 @@ void epoll_event_status(struct epoll_core * core,struct connect_core *connect,in
 
 	if(status & CONNECT_STATUS_CLOSE)
 	{
-		// VLOGD("CONNECT_STATUS_CLOSE(%d) events:%x",fd,event_ptr->events);
+		VLOGD("CONNECT_STATUS_CLOSE(%d) events:%x",fd,event_ptr->events);
 
 		epoll_dispatch_delete(core,connect);
 	}else if(status & CONNECT_STATUS_SEND)
@@ -340,8 +340,8 @@ void epoll_event_connect(struct epoll_core * core,struct epoll_event* event_ptr)
 
 	if(events & EPOLLRDHUP)
 	{
-		VLOGD("EPOLLRDHUP trigger.");
-		connectDump(connect);
+		// VLOGD("EPOLLRDHUP trigger.");
+		// connectDump(connect);
 		//主动请求关闭
 		epoll_dispatch_delete(core,connect);
 	}
@@ -354,9 +354,9 @@ void epoll_event_connect(struct epoll_core * core,struct epoll_event* event_ptr)
 	}
 	else if(events & EPOLLERR)
 	{
-		VLOGD("EPOLLERR trigger.");
+		// VLOGD("EPOLLERR trigger.");
 		//连接异常
-		connectDump(connect);
+		// connectDump(connect);
 		//连接断开
 		epoll_dispatch_delete(core,connect);
 	}

@@ -51,6 +51,9 @@
     <ClCompile Include="..\connect_core.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\util\util.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="taskConfig.h">
@@ -96,6 +99,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\connect_core.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\util\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

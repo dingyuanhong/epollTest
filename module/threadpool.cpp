@@ -7,7 +7,7 @@ static void uv__cancelled(struct uv__work* w) {
 	abort();
 }
 
-void uv_async_done(uv_async_event_t* handle) {
+int uv_async_done(uv_async_event_t* handle) {
 	struct uv__work* w;
 	QUEUE* q;
 	QUEUE wq;
@@ -16,7 +16,7 @@ void uv_async_done(uv_async_event_t* handle) {
 	uv_mutex_lock(&handle->wq_mutex);
 	QUEUE_MOVE(&handle->wq, &wq);
 	uv_mutex_unlock(&handle->wq_mutex);
-
+	int count = 0;
 	while (!QUEUE_EMPTY(&wq)) {
 		q = QUEUE_HEAD(&wq);
 		QUEUE_REMOVE(q);
@@ -24,7 +24,9 @@ void uv_async_done(uv_async_event_t* handle) {
 		w = container_of(q, struct uv__work, wq);
 		err = (w->work == uv__cancelled) ? UV_ECANCELED : 0;
 		w->done(w, err);
+		count++;
 	}
+	return count;
 }
 
 void uv_async_complited(uv_async_event_t * async,struct uv__work* w)

@@ -35,6 +35,9 @@ void processBindCPU(int cpuid)
 //线程绑定cpu
 void threadBindCPU(int cpuid)
 {
+#ifdef _WIN32
+	SetThreadAffinityMask(GetCurrentThread(),cpuid);
+#else
 	cpu_set_t mask;
 	CPU_ZERO(&mask);
 	CPU_SET(cpuid, &mask);
@@ -42,6 +45,7 @@ void threadBindCPU(int cpuid)
 	if (pthread_setaffinity_np(pthread_self(), sizeof(mask),&mask) < 0) {
 		VLOGE("pthread_setaffinity_np error(%d)",errno);
 	}
+#endif
 }
 
 static struct process_core static_core;

@@ -18,7 +18,7 @@ int ConnectTest(const char * ip, int port)
 	VASSERTL("createSocketAddr:", addr != NULL);
 
 	nonBlocking(sock);
-
+	tcpNodelay(sock);
 	int ret = connect(sock, addr, GetSockaddrSize(addr));
 	//VASSERTL("connect:", ret != -1);
 	if (ret == -1)
@@ -58,17 +58,34 @@ int ConnectTest(const char * ip, int port)
 	int blockMode = 0;
 	ioctlsocket(sock, FIONBIO, (u_long FAR*)&blockMode); //设置为阻塞模式 
 
-#define  MAX_BUFFER_READ  65535
+#define  MAX_BUFFER_READ  1024
 
 	while (true) {
-		Sleep(10);
+		Sleep(500);
 		char buffer[MAX_BUFFER_READ];
 		ret = send(sock, buffer, MAX_BUFFER_READ, 0);
 		if (ret == SOCKET_ERROR)
 		{
 			int errorno = WSAGetLastError();
-			if (WSAECONNRESET == errorno)
+			if (EAGAIN == errorno)
 			{
+				VLOGD("EAGAIN");
+				Sleep(1);
+				continue;
+			}
+			else if (EWOULDBLOCK == errorno)
+			{
+				VLOGD("EWOULDBLOCK");
+				Sleep(1);
+				continue;
+			}
+			else if (WSAECONNABORTED == errorno)
+			{
+				break;
+			}
+			else if (WSAECONNRESET == errorno)
+			{
+				VLOGE("WSAECONNRESET");
 				break;
 			}
 			else
@@ -87,7 +104,7 @@ int ConnectTest(const char * ip, int port)
 		}
 	}
 
-	//VLOGI("socket colse.");
+	VLOGI("socket colse.");
 	shutdown(sock, SD_BOTH);
 
 	closesocket(sock);

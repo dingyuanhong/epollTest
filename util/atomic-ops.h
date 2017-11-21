@@ -31,6 +31,13 @@
 #if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 #include <atomic.h>
 #define __sync_val_compare_and_swap(p, o, n) atomic_cas_ptr(p, o, n)
+#else
+#define atomic_inc(x) __sync_add_and_fetch((x),1)
+#define atomic_dec(x) __sync_sub_and_fetch((x),1)
+#define atomic_add(x,y) __sync_add_and_fetch((x),(y))
+#define atomic_sub(x,y) __sync_sub_and_fetch((x),(y))
+#define atomic_read(x) __sync_add_and_fetch((x),0)
+#define atomic_set(x,y) __sync_lock_test_and_set (x,y)
 #endif
 
 UV_UNUSED(static int cmpxchgi(int* ptr, int oldval, int newval));

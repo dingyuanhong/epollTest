@@ -70,9 +70,17 @@ echo "net.ipv4.tcp_syn_retries = 2" >> /etc/sysctl.conf
 echo "net.ipv4.tcp_timestamps=0" >> /etc/sysctl.conf
 #向外连接的端口范围
 echo "net.ipv4.ip_local_port_range = 1024 65535" >> /etc/sysctl.conf
-echo "net.ipv4.tcp_mem = 786432 2097152 3145728">> /etc/sysctl.conf
-echo "net.ipv4.tcp_rmem = 4096 4096 16777216">> /etc/sysctl.conf
-echo "net.ipv4.tcp_wmem = 4096 4096 16777216">> /etc/sysctl.conf
+#单位:页(4K)
+echo "net.ipv4.tcp_mem = 786432 2097152 2359296">> /etc/sysctl.conf
+#单位:字节
+echo "net.ipv4.tcp_rmem = 4096 4096 4194304">> /etc/sysctl.conf
+echo "net.ipv4.tcp_wmem = 4096 4096 4194304">> /etc/sysctl.conf
+#单位:字节
+echo "net.core.rmem_default = 9663676416">> /etc/sysctl.conf
+echo "net.core.wmem_default = 9663676416">> /etc/sysctl.conf
+echo "net.core.rmem_max = 9663676416">> /etc/sysctl.conf
+echo "net.core.wmem_max = 9663676416">> /etc/sysctl.conf
+
 #开启重用
 echo "net.ipv4.tcp_tw_reuse = 1">> /etc/sysctl.conf
 #tcp快速回收

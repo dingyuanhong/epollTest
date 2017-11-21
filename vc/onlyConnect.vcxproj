@@ -154,6 +154,7 @@
     <ClCompile Include="..\util\event.cpp" />
     <ClCompile Include="..\util\log.cpp" />
     <ClCompile Include="..\util\once.cpp" />
+    <ClCompile Include="..\util\util.cpp" />
     <ClCompile Include="..\util\winapi.cpp" />
     <ClCompile Include="onlyConnect.cpp" />
     <ClCompile Include="taskConfig.cpp" />
@@ -172,6 +173,7 @@
     <ClInclude Include="..\util\once.h" />
     <ClInclude Include="..\util\queue.h" />
     <ClInclude Include="..\util\staticUtil.h" />
+    <ClInclude Include="..\util\util.h" />
     <ClInclude Include="..\util\uv_memory.h" />
     <ClInclude Include="..\util\winapi.h" />
     <ClInclude Include="taskConfig.h" />

@@ -45,6 +45,16 @@ void Reuse(SOCKET socket,int reuse)
 #endif
 }
 
+void tcpNodelay(SOCKET fd)
+{
+    int enable = 1;
+#ifdef _WIN32
+	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&enable, sizeof(enable));
+#else
+    setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (void*)&enable, sizeof(enable));
+#endif
+}
+
 void cloexec(SOCKET socket)
 {
 #ifndef _WIN32
@@ -74,7 +84,7 @@ void keepalive(SOCKET socket,int keep)
 #else
 	int keepAlive = keep;//设定KeepAlive
 	int keepIdle = 3;//开始首次KeepAlive探测前的TCP空闭时间
-	int keepInterval = 2;//两次KeepAlive探测间的时间间隔
+	int keepInterval = 3;//两次KeepAlive探测间的时间间隔
 	int keepCount = 3;//判定断开前的KeepAlive探测次数
 	if (setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, (void*)&keepAlive, sizeof(keepAlive)) == -1)
 	{
@@ -248,12 +258,12 @@ int connectRead(struct connect_core * connect)
 		}
 		else if(ECONNRESET == errno)
 		{
-			// VLOGD("recv ECONNRESET socket.");
+			VLOGE("recv ECONNRESET socket.");
 		}
 		else
 		if(ENOTSOCK == errno)
 		{
-			// VLOGD("recv ENOTSOCK socket.");
+			VLOGE("recv ENOTSOCK socket.");
 		}
 		else{
 			VLOGE("recv(%d) error.(%d)",fd,errno);
@@ -286,7 +296,7 @@ int connectWrite(struct connect_core * connect)
 		}
 		else if(ECONNRESET == errno)
 		{
-			// VLOGD("send ECONNRESET socket.");
+			VLOGE("send ECONNRESET socket.");
 		}
 		else
 		{

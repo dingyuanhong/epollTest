@@ -131,7 +131,7 @@ void epoll_threadpool_accept(struct epoll_core * epoll,struct interface_core * c
 	{
 		uv_queue_work(epoll->pool,&conn->work,work_accept,NULL);
 	}else{
-		VLOGD("accept task is running.");
+		// VLOGD("accept task is running.");
 	}
 }
 
@@ -163,12 +163,12 @@ void epoll_threadpool_close(struct epoll_core * epoll,struct connect_core * conn
 	}else{
 		VLOGD("close task is running.");
 	}
-	//epoll_event_close(epoll,conn);
+	//epoll_event_delete(epoll,conn);
 }
 
 struct epoll_func epoll_func_threadpool = {
 	epoll_threadpool_accept,
 	epoll_threadpool_read,
 	epoll_threadpool_write,
-	epoll_threadpool_close
+	NULL
 };

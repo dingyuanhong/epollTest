@@ -10,6 +10,7 @@
 
 void nonBlocking(SOCKET socket);
 void Reuse(SOCKET socket,int reuse);
+void tcpNodelay(SOCKET fd);
 void cloexec(SOCKET socket);
 void keepalive(SOCKET socket,int keep);
 
