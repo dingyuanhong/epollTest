@@ -93,8 +93,8 @@ build_recieve:$(RECIEVE_OBJS)
 	$(CXX) $(LFLAGS) -o $(RECIEVE_TARGET) $(RECIEVE_OBJS) $(LDFLAGS)
 
 build:build_send build_recieve
-	$(RM) $(OBJS)
+	$(RM) $(OBJS) $(SEND_TARGET) $(RECIEVE_TARGET)
 
 clean:
 	echo $(SRCS)
-	$(RM) $(OBJS)
+	$(RM) $(OBJS) $(SEND_TARGET) $(RECIEVE_TARGET)

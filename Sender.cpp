@@ -23,7 +23,7 @@ typedef struct Config {
 	long active;
 }Config;
 
-int getArgumentInt(int pos,int argc, char* argv[],char * name,int def)
+int getArgumentInt(int pos,int argc, char* argv[],const char * name,int def)
 {
 	for(int i = pos ; i < argc;i+=2)
 	{
@@ -44,7 +44,7 @@ int getArgumentInt(int pos,int argc, char* argv[],char * name,int def)
 	return def;
 }
 
-char* getArgumentPChar(int pos,int argc, char* argv[],char * name,char* def)
+char* getArgumentPChar(int pos,int argc, char* argv[],const char * name,char* def)
 {
 	for(int i = pos ; i < argc;i+=2)
 	{
@@ -73,7 +73,7 @@ int parseConfig(Config *config, int argc, char* argv[])
 	char * ip = argv[1];
 	int port = atoi(argv[2]);
 	if (port <= 0) {
-		printf("端口错误:%d", port);
+		printf("port(%d) error", port);
 		return -1;
 	}
 
@@ -109,15 +109,16 @@ int CheckConnect(int sock,Config *cfg)
 	struct timeval tm;
 	tm.tv_sec = 1;
 	tm.tv_usec = 0;
-	int ret = select(-1, NULL, &set, NULL, &tm);
+	int ret = select(1, NULL, &set, NULL, &tm);
 	if (ret == 0)
 	{
 		// select错误或者超时
+		VLOGD("select(%d) timeout",sock);
 		return -1;
 	}
 	else if(ret < 0)
 	{
-		VLOGE("select error:%d",errno);
+		VLOGE("select(%d) error:%d",sock,errno);
 		return -1;
 	}
 	else
@@ -128,7 +129,7 @@ int CheckConnect(int sock,Config *cfg)
 
 		if (0 != error)
 		{
-			VLOGE("getsockopt error(%d)", error);
+			VLOGE("getsockopt(%d) error(%d)",sock, error);
 			return -1;
 		}
 	}
@@ -141,7 +142,7 @@ int ConnectSocket(Config *cfg)
 	VASSERT(sock != -1);
 	struct sockaddr * addr = createSocketAddr(cfg->ip,cfg->port);
 	int ret = connect(sock,addr,GetSockaddrSize(addr));
-	VASSERT(ret != -1);
+	VASSERTA(ret != -1,"sock:%d ip:%s port:%d error:%d",sock,cfg->ip,cfg->port,errno);
 	if(ret != 0)
 	{
 		ret = CheckConnect(sock,cfg);
@@ -216,8 +217,6 @@ void create_work(uv_work_t* req)
 		int ret = uv_queue_work(task->pool,&t->req,read_work,read_done);
 		VASSERT(ret == 0);
 		atomic_inc(&task->cfg->active);
-	}else{
-		VLOGE("connect error.(%d)",errno);
 	}
 }
 
@@ -260,7 +259,7 @@ int main(int argc, char* argv[])
 	struct process_core * process = processGetDefault();
 	processSignal();
 
-	TaskManage tasks[4] = {0};
+	TaskManage tasks[4];
 	int count = sizeof(tasks)/sizeof(tasks[0]);
 	count = min(cfg.threads,count);
 	for(int i = 0 ; i < count;i++)
