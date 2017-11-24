@@ -177,6 +177,15 @@ void read_work(uv_work_t* req)
 			task->error = errno;
 			task->ret = ret;
 		}
+	}else
+	{
+		if(ret == 0)
+		{
+			VLOGI("%d send %d %d",task->sock,ret,errno);
+		}else
+		{
+			// VLOGI("%d send %d",task->sock,ret);
+		}
 	}
 }
 

@@ -30,7 +30,7 @@ static void work_accept(uv_work_t* req)
 		event.data.ptr = (void*)connect;
 		event.events = connect->events;
 		cmpxchgl(&connect->lock,1,0);
-		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,connect->fd,&event);
+		int ret = epoll_ctl(core->handle,EPOLL_CTL_MOD,connect->fd,&event);
 		if(ret != 0)
 		{
 			VLOGE("epoll_ctl error.(%d)",errno);
@@ -45,8 +45,8 @@ static void work_read(uv_work_t* req)
 	//uv_work_t* req = container_of(w, uv_work_t, work_req);
 	struct connect_core *connect = container_of(req,struct connect_core,work);
 	VASSERT(connect != NULL);
-	struct epoll_core * epoll = (struct epoll_core *)connect->ptr;
-	VASSERT(epoll != NULL);
+	struct epoll_core * core = (struct epoll_core *)connect->ptr;
+	VASSERT(core != NULL);
 	int ret = 0;
 	while(true)
 	{
@@ -62,7 +62,7 @@ static void work_read(uv_work_t* req)
 	}
 	connect->ret = ret;
 	cmpxchgl(&connect->lock,1,0);
-	epoll_event_status(epoll,connect,ret);
+	epoll_event_status(core,connect,ret);
 }
 
 static void work_write(uv_work_t* req)
@@ -70,8 +70,8 @@ static void work_write(uv_work_t* req)
 	//uv_work_t* req = container_of(w, uv_work_t, work_req);
 	struct connect_core *connect = container_of(req,struct connect_core,work);
 	VASSERT(connect != NULL);
-	struct epoll_core * epoll = (struct epoll_core *)connect->ptr;
-	VASSERT(epoll != NULL);
+	struct epoll_core * core = (struct epoll_core *)connect->ptr;
+	VASSERT(core != NULL);
 	int ret = 0;
 	while(true)
 	{
@@ -87,15 +87,15 @@ static void work_write(uv_work_t* req)
 	}
 	connect->ret = ret;
 	cmpxchgl(&connect->lock,1,0);
-	epoll_event_status(epoll,connect,ret);
+	epoll_event_status(core,connect,ret);
 }
 
 static void work_close(uv_work_t* req)
 {
 	struct connect_core *connect = container_of(req,struct connect_core,work);
 	VASSERT(connect != NULL);
-	struct epoll_core * epoll = (struct epoll_core *)connect->ptr;
-	VASSERT(epoll != NULL);
+	struct epoll_core * core = (struct epoll_core *)connect->ptr;
+	VASSERT(core != NULL);
 }
 
 static void work_done(uv_work_t* req, int status)
@@ -103,12 +103,12 @@ static void work_done(uv_work_t* req, int status)
 	//uv_work_t* req = container_of(w, uv_work_t, work_req);
 	struct connect_core *connect = container_of(req,struct connect_core,work);
 	VASSERT(connect != NULL);
-	struct epoll_core * epoll = (struct epoll_core *)connect->ptr;
-	VASSERT(epoll != NULL);
+	struct epoll_core * core = (struct epoll_core *)connect->ptr;
+	VASSERT(core != NULL);
 
 	int ret = connect->ret;
 	cmpxchgl(&connect->lock,1,0);
-	epoll_event_status(epoll,connect,ret);
+	epoll_event_status(core,connect,ret);
 }
 
 static void close_done(uv_work_t* req, int status)
@@ -116,57 +116,57 @@ static void close_done(uv_work_t* req, int status)
 	//uv_work_t* req = container_of(w, uv_work_t, work_req);
 	struct connect_core *connect = container_of(req,struct connect_core,work);
 	VASSERT(connect != NULL);
-	struct epoll_core * epoll = (struct epoll_core *)connect->ptr;
-	VASSERT(epoll != NULL);
+	struct epoll_core * core = (struct epoll_core *)connect->ptr;
+	VASSERT(core != NULL);
 
-	int ret = epoll_event_delete(epoll,connect);
+	int ret = epoll_event_delete(core,connect);
 	VASSERT(ret == 0);
 	if(ret != 0)
 	{
 		cmpxchgl(&connect->lock,1,0);
-		epoll_threadpool_close(epoll,connect);
+		epoll_threadpool_close(core,connect);
 	}
 }
 
-void epoll_threadpool_accept(struct epoll_core * epoll,struct interface_core * conn)
+void epoll_threadpool_accept(struct epoll_core * core,struct interface_core * conn)
 {
 	if(cmpxchgl(&conn->lock,0,1) == 0)
 	{
-		uv_queue_work(epoll->pool,&conn->work,work_accept,NULL);
+		uv_queue_work(core->pool,&conn->work,work_accept,NULL);
 	}else{
 		// VLOGD("accept task is running.");
 	}
 }
 
-void epoll_threadpool_read(struct epoll_core * epoll,struct connect_core * conn)
+void epoll_threadpool_read(struct epoll_core * core,struct connect_core * conn)
 {
 	if(cmpxchgl(&conn->lock,0,1) == 0)
 	{
-		uv_queue_work(epoll->pool,&conn->work,work_read,NULL);
+		uv_queue_work(core->pool,&conn->work,work_read,NULL);
 	}else{
 		VLOGD("read task is running.");
 	}
 }
 
-void epoll_threadpool_write(struct epoll_core * epoll,struct connect_core * conn)
+void epoll_threadpool_write(struct epoll_core * core,struct connect_core * conn)
 {
 	if(cmpxchgl(&conn->lock,0,1) == 0)
 	{
-		uv_queue_work(epoll->pool,&conn->work,work_write,NULL);
+		uv_queue_work(core->pool,&conn->work,work_write,NULL);
 	}else{
 		VLOGD("write task is running.");
 	}
 }
 
-void epoll_threadpool_close(struct epoll_core * epoll,struct connect_core * conn)
+void epoll_threadpool_close(struct epoll_core * core,struct connect_core * conn)
 {
 	if(cmpxchgl(&conn->lock,0,1) == 0)
 	{
-		uv_queue_work(epoll->pool,&conn->work,work_close,close_done);
+		uv_queue_work(core->pool,&conn->work,work_close,close_done);
 	}else{
 		VLOGD("close task is running.");
 	}
-	//epoll_event_delete(epoll,conn);
+	//epoll_event_delete(core,conn);
 }
 
 struct epoll_func epoll_func_threadpool = {

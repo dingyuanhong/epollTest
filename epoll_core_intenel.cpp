@@ -74,7 +74,7 @@ void errnoDump(const char * name)
 }
 
 
-void epoll_internel_read(struct epoll_core * epoll,struct connect_core * conn)
+void epoll_internel_read(struct epoll_core * core,struct connect_core * conn)
 {
 	int ret = 0;
 	do{
@@ -87,10 +87,10 @@ void epoll_internel_read(struct epoll_core * epoll,struct connect_core * conn)
 		}
 		break;
 	}while(1);
-	epoll_event_status(epoll,conn,ret);
+	epoll_event_status(core,conn,ret);
 }
 
-void epoll_internel_write(struct epoll_core * epoll,struct connect_core * conn)
+void epoll_internel_write(struct epoll_core * core,struct connect_core * conn)
 {
 	int ret = 0;
 	do{
@@ -103,12 +103,12 @@ void epoll_internel_write(struct epoll_core * epoll,struct connect_core * conn)
 		}
 		break;
 	}while(1);
-	epoll_event_status(epoll,conn,ret);
+	epoll_event_status(core,conn,ret);
 }
 
-void epoll_internel_close(struct epoll_core * epoll,struct connect_core * conn)
+void epoll_internel_close(struct epoll_core * core,struct connect_core * conn)
 {
-	epoll_event_delete(epoll,conn);
+	epoll_event_delete(core,conn);
 }
 
 struct epoll_func epoll_func_intenel = {
