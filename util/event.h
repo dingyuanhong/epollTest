@@ -1,7 +1,7 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <Windows.h>
 #define event_handle HANDLE
 
@@ -12,10 +12,10 @@
 
 #define waitForEvent WaitForSingleObject
 #define closeEvent CloseHandle
+
 //返回值:0 成功 其他:错误码
-#define resetEvent(event) (ResetEvent(event) == 1?0:-1)
-//返回值:0 成功 其他:错误码
-#define setEvent(event) (SetEvent(event) == 1?0:-1)
+static inline int resetEvent(event_handle event) { return (ResetEvent(event) == TRUE ? 0 : -1); };
+static inline int setEvent(event_handle event) { return (SetEvent(event) == TRUE ? 0 : -1); };
 
 #else
 

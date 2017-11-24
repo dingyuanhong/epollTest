@@ -173,6 +173,7 @@
     <ClInclude Include="..\util\once.h" />
     <ClInclude Include="..\util\queue.h" />
     <ClInclude Include="..\util\staticUtil.h" />
+    <ClInclude Include="..\util\sysdef.h" />
     <ClInclude Include="..\util\util.h" />
     <ClInclude Include="..\util\uv_memory.h" />
     <ClInclude Include="..\util\winapi.h" />

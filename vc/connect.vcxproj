@@ -148,12 +148,14 @@
   <ItemGroup>
     <ClCompile Include="..\config.cpp" />
     <ClCompile Include="..\connect_core.cpp" />
+    <ClCompile Include="..\module\semaphore_mac.cpp" />
     <ClCompile Include="..\module\thread.cpp" />
     <ClCompile Include="..\module\threadpool.cpp" />
     <ClCompile Include="..\module\thread_win.cpp" />
     <ClCompile Include="..\util\event.cpp" />
     <ClCompile Include="..\util\log.cpp" />
     <ClCompile Include="..\util\once.cpp" />
+    <ClCompile Include="..\util\util.cpp" />
     <ClCompile Include="..\util\winapi.cpp" />
     <ClCompile Include="connect.cpp" />
     <ClCompile Include="taskConfig.cpp" />
@@ -162,6 +164,7 @@
   <ItemGroup>
     <ClInclude Include="..\config.h" />
     <ClInclude Include="..\connect_core.h" />
+    <ClInclude Include="..\module\semaphore_mac.h" />
     <ClInclude Include="..\module\thread.h" />
     <ClInclude Include="..\module\threadpool.h" />
     <ClInclude Include="..\util\atomic-ops.h" />
@@ -172,6 +175,8 @@
     <ClInclude Include="..\util\once.h" />
     <ClInclude Include="..\util\queue.h" />
     <ClInclude Include="..\util\staticUtil.h" />
+    <ClInclude Include="..\util\sysdef.h" />
+    <ClInclude Include="..\util\util.h" />
     <ClInclude Include="..\util\uv_memory.h" />
     <ClInclude Include="..\util\winapi.h" />
     <ClInclude Include="taskConfig.h" />

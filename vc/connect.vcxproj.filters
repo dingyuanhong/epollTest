@@ -24,15 +24,6 @@
     <ClCompile Include="taskMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\module\thread.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\module\thread_win.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\module\threadpool.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\util\event.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
@@ -42,7 +33,22 @@
     <ClCompile Include="..\util\once.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\util\util.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\util\winapi.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\module\semaphore_mac.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\module\thread.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\module\thread_win.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\module\threadpool.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="..\config.cpp">
@@ -55,12 +61,6 @@
   <ItemGroup>
     <ClInclude Include="taskConfig.h">
       <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\module\thread.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\module\threadpool.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\util\atomic.h">
       <Filter>Header Files</Filter>
@@ -86,10 +86,25 @@
     <ClInclude Include="..\util\staticUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\util\sysdef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\util\util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\util\uv_memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\util\winapi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\module\semaphore_mac.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\module\thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\module\threadpool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\config.h">

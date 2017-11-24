@@ -8,7 +8,7 @@
 #include <sys/sysinfo.h>
 #endif
 #endif
-#include "staticUtil.h"
+#include "sysdef.h"
 #include "util.h"
 #include "log.h"
 

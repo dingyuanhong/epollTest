@@ -247,7 +247,7 @@ int connectRead(struct connect_core * connect)
 	{
 		return CONNECT_STATUS_CLOSE;
 	}
-	int fd = connect->fd;
+	SOCKET fd = connect->fd;
 
 	char buffer[65535];
 	ssize_t ret = recv(fd,buffer,65535,MSG_DONTWAIT);
@@ -291,7 +291,7 @@ int connectWrite(struct connect_core * connect)
 	{
 		return CONNECT_STATUS_CLOSE;
 	}
-	int fd = connect->fd;
+	SOCKET fd = connect->fd;
 	char buffer[65535];
 	ssize_t ret = send(fd,buffer,65535,MSG_DONTWAIT);
 	if(ret <= 0){
@@ -327,7 +327,7 @@ int connectGetErrno(struct connect_core * connect)
 int connectShutdown(struct connect_core *connect,int howto)
 {
 	VASSERT(connect != NULL);
-	int fd = connect->fd;
+	SOCKET fd = connect->fd;
 
 	int ret = shutdown(fd,howto);
 	if(ret != 0)
@@ -348,6 +348,6 @@ int connectShutdown(struct connect_core *connect,int howto)
 void connectDump(struct connect_core *connect)
 {
 	VASSERT(connect != NULL);
-	int fd = connect->fd;
+	SOCKET fd = connect->fd;
 	VLOGD("events:%x fd:%d  ptr:%p status:%d",connect->events,fd,connect,connect->status);
 }

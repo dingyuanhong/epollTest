@@ -104,5 +104,8 @@
     <ClInclude Include="..\util\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\util\sysdef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

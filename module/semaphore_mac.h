@@ -1,7 +1,8 @@
 #ifndef SEMAPHORE_MAC_H
 #define SEMAPHORE_MAC_H
-
+#ifndef  _WIN32
 #include <semaphore.h>
+#endif
 
 #if defined(__APPLE__) && defined(__MACH__)
 
