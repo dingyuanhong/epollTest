@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "util/log.h"
+#include "util/uv_memory.h"
 #include "config.h"
 #include "epoll_core.h"
 #include "connect_core.h"
@@ -17,7 +18,7 @@
 
 struct epoll_core * epollCreate()
 {
-	struct epoll_core *core = (struct epoll_core*)malloc(sizeof(struct epoll_core));
+	struct epoll_core *core = (struct epoll_core*)uv_malloc(sizeof(struct epoll_core));
 	epollInit(core);
 	return core;
 }
@@ -31,7 +32,7 @@ int epoll_coreCreate(struct epoll_core * core,int concurrent)
 		return -1;
 	}else
 	{
-		core->epoll = epoll;
+		core->handle = epoll;
 	}
 	return 0;
 }
@@ -39,18 +40,18 @@ int epoll_coreCreate(struct epoll_core * core,int concurrent)
 void epoll_coreDelete(struct epoll_core * core)
 {
 	if(core == NULL) return;
-	if(core->epoll != -1)
+	if(core->handle != -1)
 	{
-		close(core->epoll);
+		close(core->handle);
 	}
-	core->epoll = -1;
+	core->handle = -1;
 }
 
 void epollInit(struct epoll_core * core)
 {
 	if(core == NULL) return;
 	core->pool = NULL;
-	core->epoll = -1;
+	core->handle = -1;
 	core->events_ptr = NULL;
 	core->event_count = 0;
 }
@@ -60,19 +61,19 @@ void epollFree(struct epoll_core ** core_ptr)
 	if(core_ptr == NULL) return;
 	struct epoll_core * core = *core_ptr;
 	if(core == NULL) return;
-	if(core->epoll != -1)
+	if(core->handle != -1)
 	{
-		close(core->epoll);
+		close(core->handle);
 	}
-	core->epoll = -1;
+	core->handle = -1;
 	if(core->events_ptr != NULL)
 	{
-		free(core->events_ptr);
+		uv_free(core->events_ptr);
 		core->events_ptr = NULL;
 	}
 	core->event_count = 0;
 	core->pool = NULL;
-	free(core);
+	uv_free(core);
 	*core_ptr = NULL;
 }
 
@@ -94,7 +95,7 @@ int epoll_event_add(struct epoll_core * core,struct interface_core * connect)
 	// event.events |= EPOLLONESHOT;
 	// event.events |= EPOLLET;
 	event.data.ptr = (void*)connect;
-	int ret = epoll_ctl(core->epoll,EPOLL_CTL_ADD,connect->fd,&event);
+	int ret = epoll_ctl(core->handle,EPOLL_CTL_ADD,connect->fd,&event);
 	return ret;
 }
 
@@ -106,7 +107,7 @@ int epoll_event_add(struct epoll_core * core,struct connect_core * connect)
 	event.events |= EPOLLONESHOT;
 	// event.events |= EPOLLET;
 	event.data.ptr = (void*)connect;
-	int ret = epoll_ctl(core->epoll,EPOLL_CTL_ADD,connect->fd,&event);
+	int ret = epoll_ctl(core->handle,EPOLL_CTL_ADD,connect->fd,&event);
 	return ret;
 }
 
@@ -168,7 +169,7 @@ int epoll_event_accept(struct epoll_core *core,struct interface_core * interface
 		struct epoll_event event;
 		event.data.ptr = (void*)interface;
 		event.events = interface->events;
-		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,interface->fd,&event);
+		int ret = epoll_ctl(core->handle,EPOLL_CTL_MOD,interface->fd,&event);
 		if(ret != 0)
 		{
 			errnoDump("epoll_event_server EPOLLONESHOT epoll_ctl");
@@ -184,7 +185,7 @@ int epoll_event_close(struct epoll_core * core,struct connect_core *connect)
 	VASSERT(connect != NULL);
 	int fd = connect->fd;
 
-	int ret = epoll_ctl(core->epoll,EPOLL_CTL_DEL,fd,NULL);
+	int ret = epoll_ctl(core->handle,EPOLL_CTL_DEL,fd,NULL);
 	if(ret == 0)
 	{
 		int error = connectGetErrno(connect);
@@ -290,7 +291,7 @@ void epoll_event_status(struct epoll_core * core,struct connect_core *connect,in
 
 		event_ptr->events &= ~EPOLLIN;
 		event_ptr->events |= EPOLLOUT;
-		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
+		int ret = epoll_ctl(core->handle,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
 			VLOGE("(%d) epoll_ctl error(%d).",fd,errno);
@@ -302,7 +303,7 @@ void epoll_event_status(struct epoll_core * core,struct connect_core *connect,in
 
 		event_ptr->events &= ~EPOLLOUT;
 		event_ptr->events |= EPOLLIN;
-		int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
+		int ret = epoll_ctl(core->handle,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
 			VLOGE("(%d) epoll_ctl error(%d).",fd,errno);
@@ -318,7 +319,7 @@ void epoll_event_status(struct epoll_core * core,struct connect_core *connect,in
 		{
 			event_ptr->events &= ~EPOLLOUT;
 			event_ptr->events |= EPOLLIN;
-			int ret = epoll_ctl(core->epoll,EPOLL_CTL_MOD,fd,event_ptr);
+			int ret = epoll_ctl(core->handle,EPOLL_CTL_MOD,fd,event_ptr);
 			if(ret == -1)
 			{
 				VLOGE("(%d) epoll_ctl error(%d).",fd,errno);
@@ -429,7 +430,7 @@ int epoll_event_process(struct epoll_core * core,long timeout)
 	if(events_ptr == NULL)
 	{
 		event_count = max(1,event_count);
-		events_ptr = (struct epoll_event*)malloc(sizeof(struct epoll_event)*event_count);
+		events_ptr = (struct epoll_event*)uv_malloc(sizeof(struct epoll_event)*event_count);
 		if(events_ptr == NULL)
 		{
 			VLOGE("memory not enough.");
@@ -442,7 +443,7 @@ int epoll_event_process(struct epoll_core * core,long timeout)
 		core->event_count = event_count;
 	}
 
-	int n = epoll_wait(core->epoll,events_ptr,event_count,timeout);
+	int n = epoll_wait(core->handle,events_ptr,event_count,timeout);
 	if(n == 0)
 	{
 		return 0;

@@ -25,6 +25,7 @@ struct interface_core
 
 	uv_work_t work;
 	int events;
+	int flags;
 	void * ptr;
 	long lock;
 };
@@ -36,6 +37,7 @@ struct connect_core
 
 	uv_work_t work;
 	int events;
+	int flags;
 	void * ptr;
 	long lock;  //独占锁
 

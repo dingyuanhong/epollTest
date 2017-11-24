@@ -14,7 +14,7 @@ struct epoll_func
 struct epoll_core
 {
 	uv_threadpool_t *pool;
-	int epoll;		//epoll句柄
+	int handle;		//epoll句柄
 	struct epoll_event *events_ptr;
 	int event_count;
 	struct epoll_func conn_func;

@@ -10,7 +10,7 @@
 #include "config.h"
 #include "connect_core.h"
 #include "process_core.h"
-#include "epoll_core.h"
+#include "event_loop_core.h"
 
 int main()
 {
@@ -34,30 +34,30 @@ int main()
 	uv_async_event_t async;
 	uv_async_init(&async);
 
-	struct epoll_core * epoll_core = epollCreate();;
-	epoll_coreCreate(epoll_core,config->max_listen);
-	epoll_core->event_count = config->concurrent;
+	event_loop_core * loop_core = loopCreate();;
+	loop_coreCreate(loop_core,config->max_listen);
+	loop_core->event_count = config->concurrent;
 	if(config->threadpool)
 	{
-		epoll_core->pool = threadpool_create(&async);
+		loop_core->pool = threadpool_create(&async);
 	}
 
-	processSet(process,epoll_core);
+	processSet(process,loop_core);
 
 	struct interface_core * connect = interfaceCreate();
 	connect->type |= INTERFACE_TYPE_SERVER;
 	connect->fd = server;
-	connect->ptr = (void*)epoll_core;
-	epoll_event_prepare(epoll_core);
+	connect->ptr = (void*)loop_core;
+	loop_event_prepare(loop_core);
 
-	int ret = epoll_event_add(epoll_core,connect);
+	int ret = loop_event_add(loop_core,connect);
 	if(ret != -1)
 	{
 		VLOGI("server:%d process:%p",connect->fd,process);
-		VLOGI("epoll:%d pool:%p",epoll_core->epoll,epoll_core->pool);
+		VLOGI("loop:%d pool:%p",loop_core->handle,loop_core->pool);
 		while(!process->signal_term_stop)
 		{
-			epoll_event_process(epoll_core,config->timeout);
+			loop_event_process(loop_core,config->timeout);
 			uv_async_done(&async);
 		}
 	}else{
@@ -66,8 +66,8 @@ int main()
 	interfaceFree(&connect);
 
 	VLOGI("server stop.");
-	epoll_coreDelete(epoll_core);
-	epollFree(&epoll_core);
+	loop_coreDelete(loop_core);
+	loopFree(&loop_core);
 	processFree(&process);
 	configFree(&config);
 	return 1;

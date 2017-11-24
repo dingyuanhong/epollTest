@@ -1,9 +1,11 @@
-#include "epoll_core_threadpool.h"
-#include "util/staticUtil.h"
+#include "util/sysdef.h"
 #include "util/log.h"
 #include "util/atomic.h"
+
 #include "connect_core.h"
 #include "epoll_core_intenel.h"
+#include "epoll_core_threadpool.h"
+
 #ifdef __linux__
 #include <sys/epoll.h>
 static void work_accept(uv_work_t* req)
