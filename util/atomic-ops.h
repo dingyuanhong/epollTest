@@ -32,12 +32,12 @@
 #include <atomic.h>
 #define __sync_val_compare_and_swap(p, o, n) atomic_cas_ptr(p, o, n)
 #else
-#define atomic_inc(x) __sync_add_and_fetch((x),1)
-#define atomic_dec(x) __sync_sub_and_fetch((x),1)
-#define atomic_add(x,y) __sync_add_and_fetch((x),(y))
-#define atomic_sub(x,y) __sync_sub_and_fetch((x),(y))
-#define atomic_read(x) __sync_add_and_fetch((x),0)
-#define atomic_set(x,y) __sync_lock_test_and_set (x,y)
+#define atomic_inc(x) __sync_add_and_fetch(&(x),1)
+#define atomic_dec(x) __sync_sub_and_fetch(&(x),1)
+#define atomic_add(x,y) __sync_add_and_fetch(&(x),(y))
+#define atomic_sub(x,y) __sync_sub_and_fetch(&(x),(y))
+#define atomic_read(x) __sync_add_and_fetch(&(x),0)
+#define atomic_set(x,y) __sync_lock_test_and_set (&(x),(y))
 #endif
 
 UV_UNUSED(static int cmpxchgi(int* ptr, int oldval, int newval));
@@ -101,6 +101,13 @@ UV_UNUSED(static void cpu_relax(void)) {
   __asm__ __volatile__ ("rep; nop");  /* a.k.a. PAUSE */
 #endif
 }
+
+#ifndef atomic_cas
+#   define atomic_cas(var, cmp, val) ((cmp) == cmpxchgl(&(var), (cmp), (val)))
+#endif
+#ifndef atomic_cas_ptr
+#   define atomic_cas_ptr(var, cmp, val) cmpxchgl(&(var), (cmp), (val))
+#endif
 
 #endif
 #endif  /* UV_ATOMIC_OPS_H_ */

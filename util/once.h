@@ -1,9 +1,11 @@
 #ifndef ONCE_H
 #define ONCE_H
 
+#include "atomic.h"
+
 typedef struct uv_cross_once_s {
   unsigned char ran;
-  long event;
+  ATOMIC_TYPE event;
 } uv_cross_once_t;
 
 #define UV_CROSS_ONCE_INIT {0,0}

@@ -5,13 +5,17 @@
 #include <Windows.h>
 #define event_handle HANDLE
 
-#ifdef CreateEvent
-#undef CreateEvent
+#ifdef createEvent
+#undef createEvent
 #endif
-#define CreateEvent(A, B) CreateEventA(NULL,A,B,NULL)
+#define createEvent(A, B) CreateEventA(NULL,A,B,NULL)
 
-#define WaitForEvent WaitForSingleObject
-#define CloseEvent CloseHandle
+#define waitForEvent WaitForSingleObject
+#define closeEvent CloseHandle
+//返回值:0 成功 其他:错误码
+#define resetEvent(event) (ResetEvent(event) == 1?0:-1)
+//返回值:0 成功 其他:错误码
+#define setEvent(event) (SetEvent(event) == 1?0:-1)
 
 #else
 
@@ -32,16 +36,16 @@ typedef uv_event_t *event_handle;
 #define WAIT_OBJECT_0  0
 #define WAIT_TIMEOUT 258L
 
-event_handle CreateEvent(bool bManualReset, bool bInitialState);
+event_handle createEvent(bool bManualReset, bool bInitialState);
 
-int WaitForEvent(event_handle event, long milliseconds);
+int waitForEvent(event_handle event, long milliseconds);
 
 //返回值:0 成功 其他:错误码
-int ResetEvent(event_handle event);
+int resetEvent(event_handle event);
 //返回值:0 成功 其他:错误码
-int SetEvent(event_handle event);
+int setEvent(event_handle event);
 
-void CloseEvent(event_handle event);
+void closeEvent(event_handle event);
 
 #endif
 

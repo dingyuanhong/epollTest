@@ -7,7 +7,7 @@
 #include "event.h"
 #include "uv_memory.h"
 
-event_handle CreateEvent(bool bManualReset, bool bInitialState)
+event_handle createEvent(bool bManualReset, bool bInitialState)
 {
 	event_handle event = (event_handle)uv_malloc(sizeof(uv_event_t));
     if (event == NULL)
@@ -30,7 +30,7 @@ event_handle CreateEvent(bool bManualReset, bool bInitialState)
 	return event;
 }
 
-int WaitForEvent(event_handle event, long milliseconds)
+int waitForEvent(event_handle event, long milliseconds)
 {
 	int rc = 0;
     struct timespec abstime;
@@ -82,7 +82,7 @@ int WaitForEvent(event_handle event, long milliseconds)
     return WAIT_OBJECT_0;
 }
 
-int ResetEvent(event_handle event)
+int resetEvent(event_handle event)
 {
 	if(event == NULL) return -1;
 
@@ -100,13 +100,13 @@ int ResetEvent(event_handle event)
     return 0;
 }
 
-int SetEvent(event_handle event)
+int setEvent(event_handle event)
 {
 	if(event == NULL) return -1;
 	return pthread_cond_signal(&event->cond);
 }
 
-void CloseEvent(event_handle event)
+void closeEvent(event_handle event)
 {
 	if(event == NULL) return;
 
