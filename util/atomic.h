@@ -70,22 +70,22 @@ static inline int usleep(int64_t microseconds)
 {
 	LARGE_INTEGER litmp;
 	LONGLONG QPart1, QPart2;
-	double dfMinus, dfFreq, dfTime;
+	double diffMinus, diffFreq, diffTime;
 	QueryPerformanceFrequency(&litmp);
-	dfFreq = (double)litmp.QuadPart;// ���ü�������ʱ��Ƶ��
+	diffFreq = (double)litmp.QuadPart;// ���ü�������ʱ��Ƶ��
 	QueryPerformanceCounter(&litmp);
 	QPart1 = litmp.QuadPart;// ���ó�ʼֵ
 	do {
 		QueryPerformanceCounter(&litmp);
 		QPart2 = litmp.QuadPart;//������ֵֹ
-		dfMinus = (double)(QPart2 - QPart1);
-		dfTime = dfMinus * 1000 / dfFreq;// ���ö�Ӧ��ʱ��ֵ����λΪ��
-		dfTime = microseconds - dfTime;
-		if (dfTime <= 0)
+		diffMinus = (double)(QPart2 - QPart1);
+		diffTime = diffMinus * 1000 / diffFreq;// ���ö�Ӧ��ʱ��ֵ����λΪ��
+		diffTime = microseconds - diffTime;
+		if (diffTime <= 0)
 		{
 			break;
 		}
-		else if (dfTime > 16)
+		else if (diffTime > 16)
 		{
 			Sleep(16);
 		}
