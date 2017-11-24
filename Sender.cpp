@@ -192,7 +192,7 @@ void read_done(uv_work_t* req, int status)
 		VASSERT(ret == 0);
 	}else{
 		VASSERT(task->manage != NULL);
-		atomic_dec(&task->manage->cfg->active);
+		atomic_dec(task->manage->cfg->active);
 		VLOGE("read error.%d",task->error);
 		close(task->sock);
 		free(task);
@@ -216,7 +216,7 @@ void create_work(uv_work_t* req)
 		t->manage = task;
 		int ret = uv_queue_work(task->pool,&t->req,read_work,read_done);
 		VASSERT(ret == 0);
-		atomic_inc(&task->cfg->active);
+		atomic_inc(task->cfg->active);
 	}
 }
 
@@ -226,13 +226,13 @@ void create_done(uv_work_t* req, int status)
 	VASSERT(task != NULL);
 	VASSERT(task->cfg != NULL);
 	VASSERT(task->pool != NULL);
-	long active = atomic_read(&task->cfg->active);
+	long active = atomic_read(task->cfg->active);
 	if(active < task->cfg->threads)
 	{
 		int ret = uv_queue_work(task->pool,&task->req,create_work,create_done);
 		VASSERT(ret == 0);
 	}else{
-		VLOGD("task over.%d",atomic_read(&task->cfg->active));
+		VLOGD("task over.%d",atomic_read(task->cfg->active));
 	}
 }
 
