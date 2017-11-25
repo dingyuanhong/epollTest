@@ -5,6 +5,7 @@
 #include "log.h"
 #include <errno.h>
 
+
 #define ERRNO_LIST \
 N(EPERM)	\
 N(ENOENT)	\
@@ -114,16 +115,4 @@ N(EOWNERDEAD)	\
 N(EQFULL)	\
 N(ELAST)
 
-#define N(A) #A,
-static char* static_errno_name_list[] = {
-	"",
-	ERRNO_LIST
-};
-#undef N
-
-#define errnoName(A) static_errno_name_list[(A)]
-
-#define ASSERTE(A) if((A) != 0)VLOGA("errno==%d %s",(A),errnoName((A)));
-
-#undef ERRNO_LIST
 #endif

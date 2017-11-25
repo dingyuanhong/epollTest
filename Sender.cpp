@@ -153,7 +153,7 @@ int ConnectSocket(Config *cfg)
 	VASSERTA(ret != -1,"sock:%d ip:%s port:%d errno:%d",sock,cfg->ip,cfg->port,errno);
 	if(ret != 0)
 	{
-		ASSERTE(errno);
+		VASSERTE(errno);
 		ret = CheckConnect(sock,cfg);
 	}
 	if(ret != 0)
@@ -212,7 +212,7 @@ void read_done(uv_work_t* req, int status)
 		VASSERT(task->manage != NULL);
 		atomic_dec(task->manage->cfg->active);
 		VLOGE("read errno.%d",task->error);
-		ASSERTE(task->error);
+		VASSERTE(task->error);
 		close(task->sock);
 		free(task);
 	}

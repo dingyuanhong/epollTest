@@ -141,22 +141,4 @@ N(ENOTRECOVERABLE)	\
 N(ERFKILL) \
 N(EHWPOISON) \
 
-#define N(A) #A,
-static const char* static_errno_name_list[] = {
-	"",
-	ERRNO_LIST
-};
-#undef N
-
-#define errnoName(A) static_errno_name_list[(A)]
-#define VASSERTE(A) if((A) != 0)VLOGA("errno==%d %s",(A),errnoName((A)));
-
-
-void print_errnos(){
-#define N(A) VLOGA("errno:%d %s",(A),errnoName((A)));
-	ERRNO_LIST;
-#undef N
-}
-
-#undef ERRNO_LIST
 #endif

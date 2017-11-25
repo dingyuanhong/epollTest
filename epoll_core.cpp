@@ -145,7 +145,7 @@ int epoll__accept(struct epoll_core * core,struct interface_core *interface_ptr)
 		close(connect);
 		return -1;
 	}else{
-		// VLOGD("accept new connect(%d) %p",connect,connect_ptr);
+		VLOGD("accept new connect(%d) %p",connect,connect_ptr);
 		return 1;
 	}
 	return 0;
@@ -192,6 +192,7 @@ int epoll_event_close(struct epoll_core * core,struct connect_core *connect)
 		VASSERTA(error == 0,"socket(%d) last error:(%d)",fd,error);
 		int ret = close(fd);
 		VASSERTA(ret == 0,"close(%d) error(%d)",fd,errno);
+		VLOGD("close %d %p result:%d",fd,connect,ret);
 		if(ret == 0)
 		{
 			connect->fd = -1;
@@ -367,7 +368,7 @@ void epoll_event_connect(struct epoll_core * core,struct epoll_event* event_ptr)
 
 	if(events & EPOLLRDHUP)
 	{
-		// VLOGD("EPOLLRDHUP trigger.");
+		VLOGD("EPOLLRDHUP trigger.");
 		// connectDump(connect);
 		//主动请求关闭
 		epoll_dispatch_delete(core,connect);
@@ -381,7 +382,7 @@ void epoll_event_connect(struct epoll_core * core,struct epoll_event* event_ptr)
 	}
 	else if(events & EPOLLERR)
 	{
-		// VLOGD("EPOLLERR trigger.");
+		VLOGD("EPOLLERR trigger.");
 		//连接异常
 		// connectDump(connect);
 		//连接断开
