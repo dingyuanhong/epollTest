@@ -7,6 +7,7 @@
 
 #include "util/log.h"
 #include "util/atomic.h"
+#include "util/errno_name.h"
 #include "connect_core.h"
 #include "process_core.h"
 #include "module/threadpool.h"
@@ -102,14 +103,20 @@ typedef struct Task{
 
 int CheckConnect(int sock,Config *cfg)
 {
-	fd_set set;
-	FD_ZERO(&set);
-	FD_SET(sock, &set);
+	fd_set rset;
+	fd_set wset;
+	fd_set eset;
+	FD_ZERO(&rset);
+	FD_ZERO(&wset);
+	FD_ZERO(&eset);
+	FD_SET(sock, &rset);
+	FD_SET(sock, &wset);
+	FD_SET(sock, &eset);
 	//select 检测超时2s
 	struct timeval tm;
-	tm.tv_sec = 1;
+	tm.tv_sec = 2;
 	tm.tv_usec = 0;
-	int ret = select(1, NULL, &set, NULL, &tm);
+	int ret = select(sock+1, &rset,&wset,&eset,&tm);
 	if (ret == 0)
 	{
 		// select错误或者超时
@@ -118,7 +125,7 @@ int CheckConnect(int sock,Config *cfg)
 	}
 	else if(ret < 0)
 	{
-		VLOGE("select(%d) error:%d",sock,errno);
+		VLOGE("select(%d) errno:%d",sock,errno);
 		return -1;
 	}
 	else
@@ -129,7 +136,7 @@ int CheckConnect(int sock,Config *cfg)
 
 		if (0 != error)
 		{
-			VLOGE("getsockopt(%d) error(%d)",sock, error);
+			VLOGE("getsockopt(%d) errno(%d)",sock, error);
 			return -1;
 		}
 	}
@@ -140,11 +147,13 @@ int ConnectSocket(Config *cfg)
 {
 	int sock = socket(AF_INET,SOCK_STREAM,0);
 	VASSERT(sock != -1);
+	nonBlocking(sock);
 	struct sockaddr * addr = createSocketAddr(cfg->ip,cfg->port);
 	int ret = connect(sock,addr,GetSockaddrSize(addr));
-	VASSERTA(ret != -1,"sock:%d ip:%s port:%d error:%d",sock,cfg->ip,cfg->port,errno);
+	VASSERTA(ret != -1,"sock:%d ip:%s port:%d errno:%d",sock,cfg->ip,cfg->port,errno);
 	if(ret != 0)
 	{
+		ASSERTE(errno);
 		ret = CheckConnect(sock,cfg);
 	}
 	if(ret != 0)
@@ -181,10 +190,10 @@ void read_work(uv_work_t* req)
 	{
 		if(ret == 0)
 		{
-			VLOGI("%d send %d %d",task->sock,ret,errno);
+			VLOGI("%d send %d errno:%d",task->sock,ret,errno);
 		}else
 		{
-			// VLOGI("%d send %d",task->sock,ret);
+			// VLOGI("%d send result:%d",task->sock,ret);
 		}
 	}
 }
@@ -202,7 +211,8 @@ void read_done(uv_work_t* req, int status)
 	}else{
 		VASSERT(task->manage != NULL);
 		atomic_dec(task->manage->cfg->active);
-		VLOGE("read error.%d",task->error);
+		VLOGE("read errno.%d",task->error);
+		ASSERTE(task->error);
 		close(task->sock);
 		free(task);
 	}
