@@ -28,7 +28,7 @@ int epoll_coreCreate(struct epoll_core * core,int concurrent)
 	if(core == NULL) return -1;
 	int epoll = epoll_create(concurrent);
 	if(epoll == -1){
-		VLOGE("epoll create error(%d)\n",errno);
+		VLOGE("epoll create errno(%d)\n",errno);
 		return -1;
 	}else
 	{
@@ -189,9 +189,9 @@ int epoll_event_close(struct epoll_core * core,struct connect_core *connect)
 	if(ret == 0)
 	{
 		int error = connectGetErrno(connect);
-		VASSERTA(error == 0,"socket(%d) last error:(%d)",fd,error);
+		VASSERTA(error == 0,"socket(%d) last errno:(%d)",fd,error);
 		int ret = close(fd);
-		VASSERTA(ret == 0,"close(%d) error(%d)",fd,errno);
+		VASSERTA(ret == 0,"close(%d) errno(%d)",fd,errno);
 		VLOGD("close %d %p result:%d",fd,connect,ret);
 		if(ret == 0)
 		{
@@ -199,7 +199,7 @@ int epoll_event_close(struct epoll_core * core,struct connect_core *connect)
 		}
 		return ret;
 	}else{
-		VLOGE("epoll_ctl error(%d)",errno);
+		VLOGE("epoll_ctl errno(%d)",errno);
 	}
 	return -1;
 }
@@ -295,7 +295,7 @@ void epoll_event_status(struct epoll_core * core,struct connect_core *connect,in
 		int ret = epoll_ctl(core->handle,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
-			VLOGE("(%d) epoll_ctl error(%d).",fd,errno);
+			VLOGE("(%d) epoll_ctl errno(%d).",fd,errno);
 			connectDump(connect);
 		}
 	}else if(status & CONNECT_STATUS_RECV)
@@ -307,7 +307,7 @@ void epoll_event_status(struct epoll_core * core,struct connect_core *connect,in
 		int ret = epoll_ctl(core->handle,EPOLL_CTL_MOD,fd,event_ptr);
 		if(ret == -1)
 		{
-			VLOGE("(%d) epoll_ctl error(%d).",fd,errno);
+			VLOGE("(%d) epoll_ctl errno(%d).",fd,errno);
 			connectDump(connect);
 		}
 	}else if(status & CONNECT_STATUS_CONTINUE)
@@ -323,7 +323,7 @@ void epoll_event_status(struct epoll_core * core,struct connect_core *connect,in
 			int ret = epoll_ctl(core->handle,EPOLL_CTL_MOD,fd,event_ptr);
 			if(ret == -1)
 			{
-				VLOGE("(%d) epoll_ctl error(%d).",fd,errno);
+				VLOGE("(%d) epoll_ctl errno(%d).",fd,errno);
 			}
 		}
 	}
@@ -451,7 +451,7 @@ int epoll_event_process(struct epoll_core * core,long timeout)
 	}
 	else if(n < 0)
 	{
-		VLOGE("epoll wait error:%d",errno);
+		VLOGE("epoll wait errno:%d",errno);
 		return -1;
 	}
 	// VLOGI("接收到消息:%d",n);

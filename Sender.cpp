@@ -165,18 +165,18 @@ int ConnectSocket(Config *cfg)
 	return sock;
 }
 
-#define MAX_BUFFER_READ 1024
+#define MAX_BUFFER_WRITE 1024
 
-void read_work(uv_work_t* req)
+void write_work(uv_work_t* req)
 {
 	Task *task = container_of(req,struct Task,req);
 	VASSERT(task != NULL);
 
-	char buffer[MAX_BUFFER_READ];
-	int ret = send(task->sock, buffer, MAX_BUFFER_READ, 0);
+	char buffer[MAX_BUFFER_WRITE];
+	int ret = send(task->sock, buffer, MAX_BUFFER_WRITE, 0);
 	if(ret == -1)
 	{
-		if(EAGAIN == ret )
+		if(EAGAIN == errno )
 		{
 			if(task->manage->cfg->send_again_timeout > 0)
 			{
@@ -190,15 +190,15 @@ void read_work(uv_work_t* req)
 	{
 		if(ret == 0)
 		{
-			VLOGI("%d send %d errno:%d",task->sock,ret,errno);
+			VLOGW("%d send result:%d errno:%d",task->sock,ret,errno);
 		}else
 		{
-			// VLOGI("%d send result:%d",task->sock,ret);
+			//VLOGI("%d send result:%d",task->sock,ret);
 		}
 	}
 }
 
-void read_done(uv_work_t* req, int status)
+void write_done(uv_work_t* req, int status)
 {
 	Task *task = container_of(req,struct Task,req);
 	VASSERT(task != NULL);
@@ -206,12 +206,12 @@ void read_done(uv_work_t* req, int status)
 
 	if(task->ret == 0)
 	{
-		int ret = uv_queue_work(task->manage->pool,&task->req,read_work,read_done);
+		int ret = uv_queue_work(task->manage->pool,&task->req,write_work,write_done);
 		VASSERT(ret == 0);
 	}else{
 		VASSERT(task->manage != NULL);
 		atomic_dec(task->manage->cfg->active);
-		VLOGE("read errno.%d",task->error);
+		VLOGE("write result:%d errno.%d",task->ret,task->error);
 		VASSERTE(task->error);
 		close(task->sock);
 		free(task);
@@ -233,7 +233,7 @@ void create_work(uv_work_t* req)
 		t->ret = 0;
 		t->error = 0;
 		t->manage = task;
-		int ret = uv_queue_work(task->pool,&t->req,read_work,read_done);
+		int ret = uv_queue_work(task->pool,&t->req,write_work,write_done);
 		VASSERT(ret == 0);
 		atomic_inc(task->cfg->active);
 	}

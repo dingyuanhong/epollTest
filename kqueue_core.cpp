@@ -35,7 +35,7 @@ void kqueueInit(struct kqueue_core * core)
 int kqueue_coreCreate(struct kqueue_core * core,int concurrent)
 {
 	core->handle = kqueue();
-	VASSERTA(core->handle != -1,"kqueue error:%d",errno);
+	VASSERTA(core->handle != -1,"kqueue errno:%d",errno);
 	return core->handle;
 }
 
@@ -172,7 +172,7 @@ int kqueue__accept(struct kqueue_core * core,struct interface_core *interface_pt
 		{
 			return 0;
 		}else{
-			VLOGE("accept error:%d",errno);
+			VLOGE("accept errno:%d",errno);
 		}
 		return -1;
 	}
@@ -219,7 +219,7 @@ int kqueue_event_accept(struct kqueue_core * core,struct interface_core *conn)
 		int ret = kevent(core->handle, &event, 1, NULL, 0, NULL);
 		if(ret != 0)
 		{
-			VLOGE("kevent error:%d",errno);
+			VLOGE("kevent errno:%d",errno);
 			return -1;
 		}
 	}
@@ -271,7 +271,7 @@ void kqueue_event_status(struct kqueue_core * core,struct connect_core * conn,in
 		int ret = kevent(core->handle, &event, 1, NULL, 0, NULL);
 		if(ret == -1)
 		{
-			VLOGE("(%d) epoll_ctl error(%d).",fd,errno);
+			VLOGE("(%d) kevent errno(%d).",fd,errno);
 			connectDump(conn);
 		}
 	}else if(status & CONNECT_STATUS_RECV)
@@ -285,7 +285,7 @@ void kqueue_event_status(struct kqueue_core * core,struct connect_core * conn,in
 		int ret = kevent(core->handle, &event, 1, NULL, 0, NULL);
 		if(ret == -1)
 		{
-			VLOGE("(%d) epoll_ctl error(%d).",fd,errno);
+			VLOGE("(%d) kevent errno(%d).",fd,errno);
 			connectDump(conn);
 		}
 	}else if(status & CONNECT_STATUS_CONTINUE)
@@ -303,12 +303,12 @@ void kqueue_event_status(struct kqueue_core * core,struct connect_core * conn,in
 			int ret = kevent(core->handle, &event, 1, NULL, 0, NULL);
 			if(ret == -1)
 			{
-				VLOGE("(%d) epoll_ctl error(%d).",fd,errno);
+				VLOGE("(%d) kevent errno(%d).",fd,errno);
 			}
 		}
 	}
 	else{
-		VLOGE("Unnown(%d) stasus:%d events:%d error",fd,status,events);
+		VLOGE("Unnown(%d) stasus:%d events:%d error.",fd,status,events);
 	}
 }
 
@@ -324,9 +324,9 @@ int kqueue_event_close(struct kqueue_core * core,struct connect_core *conn)
 	if(ret == 0)
 	{
 		int error = connectGetErrno(conn);
-		VASSERTA(error == 0,"socket(%d) last error:(%d)",fd,error);
+		VASSERTA(error == 0,"socket(%d) last errno:(%d)",fd,error);
 		int ret = close(fd);
-		VASSERTA(ret == 0,"close(%d) error(%d)",fd,errno);
+		VASSERTA(ret == 0,"close(%d) errno(%d)",fd,errno);
 		if(ret == 0)
 		{
 			conn->fd = -1;
@@ -334,7 +334,7 @@ int kqueue_event_close(struct kqueue_core * core,struct connect_core *conn)
 		return ret;
 	}else
 	{
-		VLOGE("epoll_ctl error(%d)",errno);
+		VLOGE("kevent errno(%d)",errno);
 	}
 	return -1;
 }
@@ -449,7 +449,7 @@ int kqueue_event_process(struct kqueue_core * core,long timeout)
 	}
 	else if(n < 0)
 	{
-		VLOGE("kevent wait error:%d",errno);
+		VLOGE("kevent wait errno:%d",errno);
 		return -1;
 	}
 	// VLOGI("接收到消息:%d",n);

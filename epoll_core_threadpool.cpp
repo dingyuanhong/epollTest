@@ -33,7 +33,7 @@ static void work_accept(uv_work_t* req)
 		int ret = epoll_ctl(core->handle,EPOLL_CTL_MOD,connect->fd,&event);
 		if(ret != 0)
 		{
-			VLOGE("epoll_ctl error.(%d)",errno);
+			VLOGE("epoll_ctl errno:(%d)",errno);
 		}
 	}else{
 		cmpxchgl(&connect->lock,1,0);

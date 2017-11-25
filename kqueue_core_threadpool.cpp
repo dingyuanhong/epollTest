@@ -40,7 +40,7 @@ static void work_accept(uv_work_t* req)
 		int ret = kevent(core->handle, &event, 1, NULL, 0, NULL);
 		if(ret != 0)
 		{
-			VLOGE("kevent error:%d",errno);
+			VLOGE("kevent errno:%d",errno);
 		}
 	}else{
 		cmpxchgl(&conn->lock,1,0);
