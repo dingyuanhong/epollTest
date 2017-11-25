@@ -53,16 +53,13 @@ typedef struct uv_threadpool_s{
 	uv_thread_t* threads;
 	uv_thread_t default_threads[4];
 	volatile int initialized;
+	int stop;
 }uv_threadpool_t;
 
 uv_threadpool_t *threadpool_create(uv_async_event_t *async);
+int threadpool_stop(uv_threadpool_t *pool);
 
 int uv_work_cancel(uv_threadpool_s* pool, struct uv__work* w);
-
-void uv__work_submit(uv_threadpool_s* pool,
-                     struct uv__work* w,
-                     void (*work)(struct uv__work* w),
-                     void (*done)(struct uv__work* w, int status));
 
 //入队任务
 int uv_queue_work(uv_threadpool_s* pool,

@@ -74,6 +74,26 @@ int uv_work_cancel(uv_threadpool_s* pool, struct uv__work* w) {
 	return 0;
 }
 
+int uv_pool_work_cancel(uv_threadpool_s* pool) {
+	uv_async_event_t * async = pool->async_complete;
+	struct uv__work* w;
+	QUEUE* q;
+	do{
+		q = QUEUE_HEAD(&pool->wq);
+		QUEUE_REMOVE(q);
+		QUEUE_INIT(q);
+		if (q == &exit_message)
+			continue;
+		w = QUEUE_DATA(q, struct uv__work, wq);
+		{
+			QUEUE_REMOVE(&w->wq);
+			w->work = uv__cancelled;
+		}
+		uv_async_complited(async,w);
+	}while(!QUEUE_EMPTY(&pool->wq));
+	return 0;
+}
+
 void uv_async_init(uv_async_event_t *async)
 {
 	QUEUE_INIT(&async->wq);
@@ -209,6 +229,11 @@ int uv_queue_work(uv_threadpool_s* pool,
                   uv_work_t* req,
                   uv_work_cb work_cb,
                   uv_after_work_cb after_work_cb) {
+	if(pool->stop == 1)
+	{
+		VLOGW("pool stoped");
+		return UV_EINVAL;
+	}
 	if (work_cb == 0)
 	{
 		VLOGE("work_cb == NULL.");
@@ -236,11 +261,30 @@ uv_threadpool_t *threadpool_create(uv_async_event_t *async)
 
 	pool->once = UV_CROSS_ONCE_INIT;
 	pool->async_complete = async;
+	pool->stop = 0;
 	return pool;
 }
 
 int threadpool_stop(uv_threadpool_t *pool)
 {
+	pool->stop = 1;
 	post(pool,&exit_message);
+	if(pool->threads != NULL)
+	{
+		for (int i = 0; i < pool->nthreads; i++)
+		{
+			if(pool->threads[i] != NULL)
+			{
+				uv_thread_join(&pool->threads[i]);
+				pool->threads[i] = NULL;
+			}
+		}
+		if(pool->threads != pool->default_threads)
+		{
+			delete pool->threads;
+		}
+		pool->threads = NULL;
+	}
+	uv_pool_work_cancel(pool);
 	return 0;
 }

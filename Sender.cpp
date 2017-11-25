@@ -18,6 +18,7 @@
 typedef struct Config {
 	char * ip;
 	int port;
+	int nonblock;
 	int async_timeout;
 	int send_again_timeout;
 	int threads;
@@ -80,6 +81,7 @@ int parseConfig(Config *config, int argc, char* argv[])
 
 	config->ip = ip;
 	config->port = port;
+	config->nonblock = getArgumentInt(3,argc,argv,"-nonblock",1);
 	config->threads = getArgumentInt(3,argc,argv,"-threads",1);
 	config->async_timeout = getArgumentInt(3,argc,argv,"-async",0);
 	config->send_again_timeout = getArgumentInt(3,argc,argv,"-send_again",0);
@@ -147,7 +149,10 @@ int ConnectSocket(Config *cfg)
 {
 	int sock = socket(AF_INET,SOCK_STREAM,0);
 	VASSERT(sock != -1);
-	nonBlocking(sock);
+	if(cfg->nonblock)
+	{
+		nonBlocking(sock);
+	}
 	struct sockaddr * addr = createSocketAddr(cfg->ip,cfg->port);
 	int ret = connect(sock,addr,GetSockaddrSize(addr));
 	VASSERTA(ret != -1,"sock:%d ip:%s port:%d errno:%d",sock,cfg->ip,cfg->port,errno);
@@ -204,11 +209,13 @@ void write_done(uv_work_t* req, int status)
 	VASSERT(task != NULL);
 	VASSERT(task->manage != NULL);
 
-	if(task->ret == 0)
+	if(task->ret == 0 && status == 0)
 	{
 		int ret = uv_queue_work(task->manage->pool,&task->req,write_work,write_done);
 		VASSERT(ret == 0);
-	}else{
+		if(ret == 0) return;
+	}
+	{
 		VASSERT(task->manage != NULL);
 		atomic_dec(task->manage->cfg->active);
 		VLOGE("write result:%d errno.%d",task->ret,task->error);
@@ -246,7 +253,7 @@ void create_done(uv_work_t* req, int status)
 	VASSERT(task->cfg != NULL);
 	VASSERT(task->pool != NULL);
 	long active = atomic_read(task->cfg->active);
-	if(active < task->cfg->threads)
+	if(active < task->cfg->threads && status == 0)
 	{
 		int ret = uv_queue_work(task->pool,&task->req,create_work,create_done);
 		VASSERT(ret == 0);
@@ -300,7 +307,12 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-
+	VLOGD("thread pool stop...");
+	//清理最后资源
+	threadpool_stop(pool);
+	VLOGD("thread pool stop.");
+	uv_async_done(&async);
+	VLOGD("thread async stop.");
 	processFree(&process);
 	VLOGI("free success.");
 	return 0;
