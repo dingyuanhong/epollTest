@@ -128,6 +128,7 @@ int CheckConnect(int sock,Config *cfg)
 	else if(ret < 0)
 	{
 		VLOGE("select(%d) errno:%d",sock,errno);
+		VASSERTE(errno);
 		return -1;
 	}
 	else
@@ -156,10 +157,13 @@ int ConnectSocket(Config *cfg)
 	}
 	struct sockaddr * addr = createSocketAddr(cfg->ip,cfg->port);
 	int ret = connect(sock,addr,GetSockaddrSize(addr));
-	VASSERTA(ret != -1,"sock:%d ip:%s port:%d errno:%d",sock,cfg->ip,cfg->port,errno);
 	if(ret != 0)
 	{
-		VASSERTE(errno);
+		if(errno != EINPROGRESS)
+		{
+			VASSERTA(ret != -1,"sock:%d ip:%s port:%d errno:%d",sock,cfg->ip,cfg->port,errno);
+			VASSERTE(errno);
+		}
 		ret = CheckConnect(sock,cfg);
 	}
 	if(ret != 0)
