@@ -159,12 +159,13 @@ int ConnectSocket(Config *cfg)
 	int ret = connect(sock,addr,GetSockaddrSize(addr));
 	if(ret != 0)
 	{
-		if(errno != EINPROGRESS)
+		if(errno == EINPROGRESS){
+			ret = CheckConnect(sock,cfg);
+		}else
 		{
 			VASSERTA(ret != -1,"sock:%d ip:%s port:%d errno:%d",sock,cfg->ip,cfg->port,errno);
 			VASSERTE(errno);
 		}
-		ret = CheckConnect(sock,cfg);
 	}
 	if(ret != 0)
 	{
@@ -172,6 +173,7 @@ int ConnectSocket(Config *cfg)
 		free(addr);
 		return -1;
 	}
+	free(addr);
 	return sock;
 }
 

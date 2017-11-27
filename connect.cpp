@@ -120,8 +120,9 @@ int CheckConnect(int sock,Config *cfg)
 	{
 		int error = -1;
 		int optLen = sizeof(int);
-		getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&error, (socklen_t*)&optLen);
-
+		int ret = getsockopt(sock, SOL_SOCKET, SO_ERROR, (char*)&error, (socklen_t*)&optLen);
+		VASSERT(ret == 0);
+		VASSERTE(error);
 		if (0 != error)
 		{
 			VLOGE("getsockopt(%d) errno(%d)",sock, error);
@@ -142,11 +143,13 @@ int ConnectSocket(Config *cfg)
 	}
 	struct sockaddr * addr = createSocketAddr(cfg->ip,cfg->port);
 	int ret = connect(sock,addr,GetSockaddrSize(addr));
-	VASSERTA(ret != -1,"sock:%d ip:%s port:%d errno:%d",sock,cfg->ip,cfg->port,errno);
+	VASSERTA(ret != -1,"sock:%d ip:%s port:%d errno:%d result:%d",sock,cfg->ip,cfg->port,errno,ret);
 	if(ret != 0)
 	{
 		VASSERTE(errno);
-		ret = CheckConnect(sock,cfg);
+		if(errno == EINPROGRESS){
+			ret = CheckConnect(sock,cfg);
+		}
 	}
 	if(ret != 0)
 	{
@@ -154,6 +157,7 @@ int ConnectSocket(Config *cfg)
 		free(addr);
 		return -1;
 	}
+	free(addr);
 	return sock;
 }
 
@@ -171,7 +175,7 @@ int main(int argc, char* argv[])
 	int handle = ConnectSocket(&cfg);
 	if(handle != -1)
 	{
-		VLOGI("连接成功");
+		VLOGI("连接成功:%d",handle);
 		close(handle);
 	}else{
 		VLOGI("连接失败");
