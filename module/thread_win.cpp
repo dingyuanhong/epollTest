@@ -26,6 +26,7 @@
 #include "../util/uv_memory.h"
 #include "../util/fatal.h"
 #include "../util/winapi.h"
+#include "../util/log.h"
 
 #ifdef _WIN32
 #include <process.h>
@@ -116,8 +117,10 @@ static uv_once_t uv__current_thread_init_guard = UV_ONCE_INIT;
 
 
 static void uv__init_current_thread_key(void) {
-  if (uv_key_create(&uv__current_thread_key))
+  if (uv_key_create(&uv__current_thread_key)){
+    VLOGE("uv__init_current_thread_key");
     abort();
+  }
 }
 
 
@@ -360,20 +363,26 @@ int uv_sem_init(uv_sem_t* sem, unsigned int value) {
 
 
 void uv_sem_destroy(uv_sem_t* sem) {
-  if (!CloseHandle(*sem))
+  if (!CloseHandle(*sem)){
+    VLOGE("uv_sem_destroy");
     abort();
+  }
 }
 
 
 void uv_sem_post(uv_sem_t* sem) {
-  if (!ReleaseSemaphore(*sem, 1, NULL))
+  if (!ReleaseSemaphore(*sem, 1, NULL)){
+    VLOGE("uv_sem_post");
     abort();
+  }
 }
 
 
 void uv_sem_wait(uv_sem_t* sem) {
-  if (WaitForSingleObject(*sem, INFINITE) != WAIT_OBJECT_0)
+  if (WaitForSingleObject(*sem, INFINITE) != WAIT_OBJECT_0){
+    VLOGE("uv_sem_wait");
     abort();
+  }
 }
 
 
@@ -386,6 +395,7 @@ int uv_sem_trywait(uv_sem_t* sem) {
   if (r == WAIT_TIMEOUT)
     return UV_EAGAIN;
 
+  VLOGE("uv_sem_trywait");
   abort();
   return -1; /* Satisfy the compiler. */
 }
@@ -453,10 +463,14 @@ int uv_cond_init(uv_cond_t* cond) {
 
 
 static void uv_cond_fallback_destroy(uv_cond_t* cond) {
-  if (!CloseHandle(cond->fallback.broadcast_event))
+  if (!CloseHandle(cond->fallback.broadcast_event)){
+    VLOGE("uv_cond_fallback_destroy");
     abort();
-  if (!CloseHandle(cond->fallback.signal_event))
+  }
+  if (!CloseHandle(cond->fallback.signal_event)){
+    VLOGE("uv_cond_fallback_destroy");
     abort();
+  }
   DeleteCriticalSection(&cond->fallback.waiters_count_lock);
 }
 
@@ -571,20 +585,25 @@ static int uv_cond_wait_helper(uv_cond_t* cond, uv_mutex_t* mutex,
   if (result == WAIT_TIMEOUT)
     return UV_ETIMEDOUT;
 
+  VLOGE("uv_cond_wait_helper");
   abort();
   return -1; /* Satisfy the compiler. */
 }
 
 
 static void uv_cond_fallback_wait(uv_cond_t* cond, uv_mutex_t* mutex) {
-  if (uv_cond_wait_helper(cond, mutex, INFINITE))
+  if (uv_cond_wait_helper(cond, mutex, INFINITE)){
+    VLOGE("uv_cond_fallback_wait");
     abort();
+  }
 }
 
 
 static void uv_cond_condvar_wait(uv_cond_t* cond, uv_mutex_t* mutex) {
-  if (!pSleepConditionVariableCS(&cond->cond_var, mutex, INFINITE))
+  if (!pSleepConditionVariableCS(&cond->cond_var, mutex, INFINITE)){
+    VLOGE("uv_cond_condvar_wait");
     abort();
+  }
 }
 
 
@@ -606,8 +625,10 @@ static int uv_cond_condvar_timedwait(uv_cond_t* cond,
     uv_mutex_t* mutex, uint64_t timeout) {
   if (pSleepConditionVariableCS(&cond->cond_var, mutex, (DWORD)(timeout / 1e6)))
     return 0;
-  if (GetLastError() != ERROR_TIMEOUT)
+  if (GetLastError() != ERROR_TIMEOUT){
+    VLOGE("uv_cond_condvar_timedwait");
     abort();
+  }
   return UV_ETIMEDOUT;
 }
 
@@ -704,16 +725,20 @@ void* uv_key_get(uv_key_t* key) {
 
   value = TlsGetValue(key->tls_index);
   if (value == NULL)
-    if (GetLastError() != ERROR_SUCCESS)
+    if (GetLastError() != ERROR_SUCCESS){
+      VLOGE("uv_key_get");
       abort();
+    }
 
   return value;
 }
 
 
 void uv_key_set(uv_key_t* key, void* value) {
-  if (TlsSetValue(key->tls_index, value) == FALSE)
+  if (TlsSetValue(key->tls_index, value) == FALSE){
+    VLOGE("uv_key_set");
     abort();
+  }
 }
 
 #endif

@@ -39,6 +39,7 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #endif
+#include "../util/log.h"
 
 #undef NANOSEC
 #define NANOSEC ((uint64_t) 1e9)
@@ -93,20 +94,26 @@ int uv_thread_create(uv_thread_t *tid, void (*entry)(void *arg), void *arg) {
    * size by default, adjust it to RLIMIT_STACK.
    */
 #if defined(__APPLE__)
-  if (getrlimit(RLIMIT_STACK, &lim))
+  if (getrlimit(RLIMIT_STACK, &lim)){
+    VLOGE("uv_thread_create");
     abort();
+  }
 
   attr = &attr_storage;
-  if (pthread_attr_init(attr))
+  if (pthread_attr_init(attr)){
+    VLOGE("uv_thread_create");
     abort();
+  }
 
   if (lim.rlim_cur != RLIM_INFINITY) {
     /* pthread_attr_setstacksize() expects page-aligned values. */
     lim.rlim_cur -= lim.rlim_cur % (rlim_t) getpagesize();
 
     if (lim.rlim_cur >= PTHREAD_STACK_MIN)
-      if (pthread_attr_setstacksize(attr, lim.rlim_cur))
+      if (pthread_attr_setstacksize(attr, lim.rlim_cur)){
+        VLOGE("uv_thread_create");
         abort();
+      }
   }
 #else
   attr = NULL;
@@ -142,16 +149,22 @@ int uv_mutex_init(uv_mutex_t* mutex) {
   pthread_mutexattr_t attr;
   int err;
 
-  if (pthread_mutexattr_init(&attr))
+  if (pthread_mutexattr_init(&attr)){
+    VLOGE("uv_mutex_init");
     abort();
+  }
 
-  if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK))
+  if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK)){
+    VLOGE("uv_mutex_init");
     abort();
+  }
 
   err = pthread_mutex_init(mutex, &attr);
 
-  if (pthread_mutexattr_destroy(&attr))
+  if (pthread_mutexattr_destroy(&attr)){
+    VLOGE("uv_mutex_init");
     abort();
+  }
 
   return -err;
 #endif
@@ -159,14 +172,18 @@ int uv_mutex_init(uv_mutex_t* mutex) {
 
 
 void uv_mutex_destroy(uv_mutex_t* mutex) {
-  if (pthread_mutex_destroy(mutex))
+  if (pthread_mutex_destroy(mutex)){
+    VLOGE("uv_mutex_destroy");
     abort();
+  }
 }
 
 
 void uv_mutex_lock(uv_mutex_t* mutex) {
-  if (pthread_mutex_lock(mutex))
+  if (pthread_mutex_lock(mutex)){
+    VLOGE("uv_mutex_lock");
     abort();
+  }
 }
 
 
@@ -175,8 +192,10 @@ int uv_mutex_trylock(uv_mutex_t* mutex) {
 
   err = pthread_mutex_trylock(mutex);
   if (err) {
-    if (err != EBUSY && err != EAGAIN)
+    if (err != EBUSY && err != EAGAIN){
+      VLOGE("uv_mutex_trylock");
       abort();
+    }
     return -EBUSY;
   }
 
@@ -185,8 +204,10 @@ int uv_mutex_trylock(uv_mutex_t* mutex) {
 
 
 void uv_mutex_unlock(uv_mutex_t* mutex) {
-  if (pthread_mutex_unlock(mutex))
+  if (pthread_mutex_unlock(mutex)){
+    VLOGE("uv_mutex_unlock");
     abort();
+  }
 }
 
 
@@ -196,14 +217,18 @@ int uv_rwlock_init(uv_rwlock_t* rwlock) {
 
 
 void uv_rwlock_destroy(uv_rwlock_t* rwlock) {
-  if (pthread_rwlock_destroy(rwlock))
+  if (pthread_rwlock_destroy(rwlock)){
+    VLOGE("uv_rwlock_destroy");
     abort();
+  }
 }
 
 
 void uv_rwlock_rdlock(uv_rwlock_t* rwlock) {
-  if (pthread_rwlock_rdlock(rwlock))
+  if (pthread_rwlock_rdlock(rwlock)){
+    VLOGE("uv_rwlock_rdlock");
     abort();
+  }
 }
 
 
@@ -212,8 +237,10 @@ int uv_rwlock_tryrdlock(uv_rwlock_t* rwlock) {
 
   err = pthread_rwlock_tryrdlock(rwlock);
   if (err) {
-    if (err != EBUSY && err != EAGAIN)
+    if (err != EBUSY && err != EAGAIN){
+      VLOGE("uv_rwlock_tryrdlock");
       abort();
+    }
     return -EBUSY;
   }
 
@@ -222,14 +249,18 @@ int uv_rwlock_tryrdlock(uv_rwlock_t* rwlock) {
 
 
 void uv_rwlock_rdunlock(uv_rwlock_t* rwlock) {
-  if (pthread_rwlock_unlock(rwlock))
+  if (pthread_rwlock_unlock(rwlock)){
+    VLOGE("uv_rwlock_rdunlock");
     abort();
+  }
 }
 
 
 void uv_rwlock_wrlock(uv_rwlock_t* rwlock) {
-  if (pthread_rwlock_wrlock(rwlock))
+  if (pthread_rwlock_wrlock(rwlock)){
+    VLOGE("uv_rwlock_wrlock");
     abort();
+  }
 }
 
 
@@ -238,8 +269,10 @@ int uv_rwlock_trywrlock(uv_rwlock_t* rwlock) {
 
   err = pthread_rwlock_trywrlock(rwlock);
   if (err) {
-    if (err != EBUSY && err != EAGAIN)
+    if (err != EBUSY && err != EAGAIN){
+      VLOGE("uv_rwlock_trywrlock");
       abort();
+    }
     return -EBUSY;
   }
 
@@ -248,14 +281,18 @@ int uv_rwlock_trywrlock(uv_rwlock_t* rwlock) {
 
 
 void uv_rwlock_wrunlock(uv_rwlock_t* rwlock) {
-  if (pthread_rwlock_unlock(rwlock))
+  if (pthread_rwlock_unlock(rwlock)){
+    VLOGE("uv_rwlock_wrunlock");
     abort();
+  }
 }
 
 
 void uv_once(uv_once_t* guard, void (*callback)(void)) {
-  if (pthread_once(guard, callback))
+  if (pthread_once(guard, callback)){
+    VLOGE("uv_once");
     abort();
+  }
 }
 
 #if defined(__APPLE__) && defined(__MACH__)
@@ -366,14 +403,18 @@ int uv_sem_init(uv_sem_t* sem, unsigned int value) {
 
 
 void uv_sem_destroy(uv_sem_t* sem) {
-  if (semaphore_destroy(mach_task_self(), *sem))
+  if (semaphore_destroy(mach_task_self(), *sem)){
+    VLOGE("uv_sem_destroy");
     abort();
+  }
 }
 
 
 void uv_sem_post(uv_sem_t* sem) {
-  if (semaphore_signal(*sem))
+  if (semaphore_signal(*sem)){
+    VLOGE("uv_sem_post");
     abort();
+  }
 }
 
 
@@ -384,8 +425,10 @@ void uv_sem_wait(uv_sem_t* sem) {
     r = semaphore_wait(*sem);
   while (r == KERN_ABORTED);
 
-  if (r != KERN_SUCCESS)
+  if (r != KERN_SUCCESS){
+    VLOGE("uv_sem_wait");
     abort();
+  }
 }
 
 
@@ -402,6 +445,7 @@ int uv_sem_trywait(uv_sem_t* sem) {
   if (err == KERN_OPERATION_TIMED_OUT)
     return -EAGAIN;
 
+  VLOGE("uv_sem_trywait");
   abort();
   return -EINVAL;  /* Satisfy the compiler. */
 }
@@ -423,8 +467,10 @@ int uv_sem_init(uv_sem_t* sem, unsigned int value) {
 
   if (-1 == semop(semid, &buf, 1)) {
     err = errno;
-    if (-1 == semctl(*sem, 0, IPC_RMID))
+    if (-1 == semctl(*sem, 0, IPC_RMID)){
+      VLOGE("uv_sem_init");
       abort();
+    }
     return -err;
   }
 
@@ -433,8 +479,10 @@ int uv_sem_init(uv_sem_t* sem, unsigned int value) {
 }
 
 void uv_sem_destroy(uv_sem_t* sem) {
-  if (-1 == semctl(*sem, 0, IPC_RMID))
+  if (-1 == semctl(*sem, 0, IPC_RMID)){
+    VLOGE("uv_sem_destroy");
     abort();
+  }
 }
 
 void uv_sem_post(uv_sem_t* sem) {
@@ -444,8 +492,10 @@ void uv_sem_post(uv_sem_t* sem) {
   buf.sem_op = 1;
   buf.sem_flg = 0;
 
-  if (-1 == semop(*sem, &buf, 1))
+  if (-1 == semop(*sem, &buf, 1)){
+    VLOGE("uv_sem_post");
     abort();
+  }
 }
 
 void uv_sem_wait(uv_sem_t* sem) {
@@ -460,8 +510,10 @@ void uv_sem_wait(uv_sem_t* sem) {
     op_status = semop(*sem, &buf, 1);
   while (op_status == -1 && errno == EINTR);
 
-  if (op_status)
+  if (op_status){
+    VLOGE("uv_sem_wait");
     abort();
+  }
 }
 
 int uv_sem_trywait(uv_sem_t* sem) {
@@ -479,6 +531,7 @@ int uv_sem_trywait(uv_sem_t* sem) {
   if (op_status) {
     if (errno == EAGAIN)
       return -EAGAIN;
+    VLOGE("uv_sem_trywait");
     abort();
   }
 
@@ -495,14 +548,18 @@ int uv_sem_init(uv_sem_t* sem, unsigned int value) {
 
 
 void uv_sem_destroy(uv_sem_t* sem) {
-  if (sem_destroy(sem))
+  if (sem_destroy(sem)){
+    VLOGE("uv_sem_destroy");
     abort();
+  }
 }
 
 
 void uv_sem_post(uv_sem_t* sem) {
-  if (sem_post(sem))
+  if (sem_post(sem)){
+    VLOGE("uv_sem_post");
     abort();
+  }
 }
 
 
@@ -513,8 +570,10 @@ void uv_sem_wait(uv_sem_t* sem) {
     r = sem_wait(sem);
   while (r == -1 && errno == EINTR);
 
-  if (r)
+  if (r){
+    VLOGE("uv_sem_wait");
     abort();
+  }
 }
 
 
@@ -528,6 +587,7 @@ int uv_sem_trywait(uv_sem_t* sem) {
   if (r) {
     if (errno == EAGAIN)
       return -EAGAIN;
+    VLOGE("uv_sem_trywait");
     abort();
   }
 
@@ -588,43 +648,61 @@ void uv_cond_destroy(uv_cond_t* cond) {
   struct timespec ts;
   int err;
 
-  if (pthread_mutex_init(&mutex, NULL))
+  if (pthread_mutex_init(&mutex, NULL)){
+    VLOGE("uv_cond_destroy");
     abort();
+  }
 
-  if (pthread_mutex_lock(&mutex))
+  if (pthread_mutex_lock(&mutex)){
+    VLOGE("uv_cond_destroy");
     abort();
+  }
 
   ts.tv_sec = 0;
   ts.tv_nsec = 1;
 
   err = pthread_cond_timedwait_relative_np(cond, &mutex, &ts);
-  if (err != 0 && err != ETIMEDOUT)
+  if (err != 0 && err != ETIMEDOUT){
+    VLOGE("uv_cond_destroy");
     abort();
+  }
 
-  if (pthread_mutex_unlock(&mutex))
+  if (pthread_mutex_unlock(&mutex)){
+    VLOGE("uv_cond_destroy");
     abort();
+  }
 
-  if (pthread_mutex_destroy(&mutex))
+  if (pthread_mutex_destroy(&mutex)){
+    VLOGE("uv_cond_destroy");
     abort();
+  }
 #endif /* defined(__APPLE__) && defined(__MACH__) */
 
-  if (pthread_cond_destroy(cond))
+  if (pthread_cond_destroy(cond)){
+    VLOGE("uv_cond_destroy");
     abort();
+  }
 }
 
 void uv_cond_signal(uv_cond_t* cond) {
-  if (pthread_cond_signal(cond))
+  if (pthread_cond_signal(cond)){
+    VLOGE("uv_cond_signal");
     abort();
+  }
 }
 
 void uv_cond_broadcast(uv_cond_t* cond) {
-  if (pthread_cond_broadcast(cond))
+  if (pthread_cond_broadcast(cond)){
+    VLOGE("uv_cond_broadcast");
     abort();
+  }
 }
 
 void uv_cond_wait(uv_cond_t* cond, uv_mutex_t* mutex) {
-  if (pthread_cond_wait(cond, mutex))
+  if (pthread_cond_wait(cond, mutex)){
+    VLOGE("uv_cond_wait");
     abort();
+  }
 }
 
 
@@ -658,6 +736,7 @@ int uv_cond_timedwait(uv_cond_t* cond, uv_mutex_t* mutex, uint64_t timeout) {
   if (r == ETIMEDOUT)
     return -ETIMEDOUT;
 
+  VLOGE("uv_cond_timedwait");
   abort();
   return -EINVAL;  /* Satisfy the compiler. */
 }
@@ -669,15 +748,19 @@ int uv_barrier_init(uv_barrier_t* barrier, unsigned int count) {
 
 
 void uv_barrier_destroy(uv_barrier_t* barrier) {
-  if (pthread_barrier_destroy(barrier))
+  if (pthread_barrier_destroy(barrier)){
+    VLOGE("uv_barrier_destroy");
     abort();
+  }
 }
 
 
 int uv_barrier_wait(uv_barrier_t* barrier) {
   int r = pthread_barrier_wait(barrier);
-  if (r && r != PTHREAD_BARRIER_SERIAL_THREAD)
+  if (r && r != PTHREAD_BARRIER_SERIAL_THREAD){
+    VLOGE("uv_barrier_wait");
     abort();
+  }
   return r == PTHREAD_BARRIER_SERIAL_THREAD;
 }
 #endif
@@ -688,8 +771,10 @@ int uv_key_create(uv_key_t* key) {
 
 
 void uv_key_delete(uv_key_t* key) {
-  if (pthread_key_delete(*key))
+  if (pthread_key_delete(*key)){
+    VLOGE("uv_key_delete");
     abort();
+  }
 }
 
 
@@ -699,8 +784,10 @@ void* uv_key_get(uv_key_t* key) {
 
 
 void uv_key_set(uv_key_t* key, void* value) {
-  if (pthread_setspecific(*key, value))
+  if (pthread_setspecific(*key, value)){
+    VLOGE("uv_key_set");
     abort();
+  }
 }
 
 #endif

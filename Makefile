@@ -23,6 +23,10 @@ SEND_TARGET=sender
 RECIEVE_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o epoll_core.o epoll_core_intenel.o epoll_core_threadpool.o kqueue_core.o kqueue_core_threadpool.o Recieve.o
 RECIEVE_TARGET=recieve
 
+CONNECT_OBJS=$(MODULE_OBJS) config.o connect_core.o process_core.o connect.o
+CONNECT_TARGET=connect
+
+
 #动态库
 LIBS := stdc++ pthread
 
@@ -92,7 +96,10 @@ build_send:$(SEND_OBJS)
 build_recieve:$(RECIEVE_OBJS)
 	$(CXX) $(LFLAGS) -o $(RECIEVE_TARGET) $(RECIEVE_OBJS) $(LDFLAGS)
 
-build:build_send build_recieve
+build_connect:$(CONNECT_OBJS)
+	$(CXX) $(LFLAGS) -o $(CONNECT_TARGET) $(CONNECT_OBJS) $(LDFLAGS)
+
+build:build_send build_recieve build_connect
 	$(RM) $(OBJS)
 
 clean:

@@ -139,6 +139,7 @@ int CheckConnect(int sock,Config *cfg)
 		if (0 != error)
 		{
 			VLOGE("getsockopt(%d) errno(%d)",sock, error);
+			VASSERTE(error);
 			return -1;
 		}
 	}
@@ -243,6 +244,8 @@ void create_work(uv_work_t* req)
 		int ret = uv_queue_work(task->pool,&t->req,write_work,write_done);
 		VASSERT(ret == 0);
 		atomic_inc(task->cfg->active);
+	}else{
+		VLOGE("ConnectSocket result:%d",sock);
 	}
 }
 

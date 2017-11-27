@@ -4,6 +4,7 @@
 
 static QUEUE exit_message;
 static void uv__cancelled(struct uv__work* w) {
+	VLOGE("uv__cancelled runned.");
 	abort();
 }
 
@@ -207,7 +208,7 @@ static void init_once(void* param) {
 	for (i = 0; i < pool->nthreads; i++)
 	if (uv_thread_create(pool->threads + i, worker, pool))
 	{
-		VLOGE("uv_thread_create error.");
+		VLOGE("uv_thread_create errno:%d.",errno);
 		abort();
 	}
 
