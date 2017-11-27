@@ -118,8 +118,7 @@ static uv_once_t uv__current_thread_init_guard = UV_ONCE_INIT;
 
 static void uv__init_current_thread_key(void) {
   if (uv_key_create(&uv__current_thread_key)){
-    VLOGE("uv__init_current_thread_key");
-    abort();
+    VABORT();
   }
 }
 
@@ -364,24 +363,21 @@ int uv_sem_init(uv_sem_t* sem, unsigned int value) {
 
 void uv_sem_destroy(uv_sem_t* sem) {
   if (!CloseHandle(*sem)){
-    VLOGE("uv_sem_destroy");
-    abort();
+    VABORT();
   }
 }
 
 
 void uv_sem_post(uv_sem_t* sem) {
   if (!ReleaseSemaphore(*sem, 1, NULL)){
-    VLOGE("uv_sem_post");
-    abort();
+    VABORT();
   }
 }
 
 
 void uv_sem_wait(uv_sem_t* sem) {
   if (WaitForSingleObject(*sem, INFINITE) != WAIT_OBJECT_0){
-    VLOGE("uv_sem_wait");
-    abort();
+    VABORT();
   }
 }
 
@@ -395,8 +391,7 @@ int uv_sem_trywait(uv_sem_t* sem) {
   if (r == WAIT_TIMEOUT)
     return UV_EAGAIN;
 
-  VLOGE("uv_sem_trywait");
-  abort();
+  VABORT();
   return -1; /* Satisfy the compiler. */
 }
 
@@ -464,12 +459,10 @@ int uv_cond_init(uv_cond_t* cond) {
 
 static void uv_cond_fallback_destroy(uv_cond_t* cond) {
   if (!CloseHandle(cond->fallback.broadcast_event)){
-    VLOGE("uv_cond_fallback_destroy");
-    abort();
+    VABORT();
   }
   if (!CloseHandle(cond->fallback.signal_event)){
-    VLOGE("uv_cond_fallback_destroy");
-    abort();
+    VABORT();
   }
   DeleteCriticalSection(&cond->fallback.waiters_count_lock);
 }
@@ -585,24 +578,21 @@ static int uv_cond_wait_helper(uv_cond_t* cond, uv_mutex_t* mutex,
   if (result == WAIT_TIMEOUT)
     return UV_ETIMEDOUT;
 
-  VLOGE("uv_cond_wait_helper");
-  abort();
+  VABORT();
   return -1; /* Satisfy the compiler. */
 }
 
 
 static void uv_cond_fallback_wait(uv_cond_t* cond, uv_mutex_t* mutex) {
   if (uv_cond_wait_helper(cond, mutex, INFINITE)){
-    VLOGE("uv_cond_fallback_wait");
-    abort();
+    VABORT();
   }
 }
 
 
 static void uv_cond_condvar_wait(uv_cond_t* cond, uv_mutex_t* mutex) {
   if (!pSleepConditionVariableCS(&cond->cond_var, mutex, INFINITE)){
-    VLOGE("uv_cond_condvar_wait");
-    abort();
+    VABORT();
   }
 }
 
@@ -626,8 +616,7 @@ static int uv_cond_condvar_timedwait(uv_cond_t* cond,
   if (pSleepConditionVariableCS(&cond->cond_var, mutex, (DWORD)(timeout / 1e6)))
     return 0;
   if (GetLastError() != ERROR_TIMEOUT){
-    VLOGE("uv_cond_condvar_timedwait");
-    abort();
+    VABORT();
   }
   return UV_ETIMEDOUT;
 }
@@ -715,7 +704,7 @@ int uv_key_create(uv_key_t* key) {
 
 void uv_key_delete(uv_key_t* key) {
   if (TlsFree(key->tls_index) == FALSE)
-    abort();
+    VABORT();
   key->tls_index = TLS_OUT_OF_INDEXES;
 }
 
@@ -726,8 +715,7 @@ void* uv_key_get(uv_key_t* key) {
   value = TlsGetValue(key->tls_index);
   if (value == NULL)
     if (GetLastError() != ERROR_SUCCESS){
-      VLOGE("uv_key_get");
-      abort();
+      VABORT();
     }
 
   return value;
@@ -736,8 +724,7 @@ void* uv_key_get(uv_key_t* key) {
 
 void uv_key_set(uv_key_t* key, void* value) {
   if (TlsSetValue(key->tls_index, value) == FALSE){
-    VLOGE("uv_key_set");
-    abort();
+    VABORT();
   }
 }
 

@@ -43,4 +43,6 @@ int VLOG_GetLevel();
 #define VWARNR(_exp,A) if((!(_exp))) VLOG(VLOG_WARN,#_exp " " A);
 #define VWARNA(_exp,A,...) if((!(_exp))) VLOG(VLOG_WARN,"(" #_exp ") " A,##__VA_ARGS__);
 
+#define VABORT() VLOGE("abort");abort();
+
 #endif
