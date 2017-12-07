@@ -83,7 +83,7 @@ int parseConfig(Config *config, int argc, char* argv[])
 	config->port = port;
 	config->nonblock = getArgumentInt(3,argc,argv,"-nonblock",1);
 	config->threads = getArgumentInt(3,argc,argv,"-threads",1);
-	config->async_timeout = getArgumentInt(3,argc,argv,"-async",0);
+	config->async_timeout = getArgumentInt(3,argc,argv,"-async",1);
 	config->send_again_timeout = getArgumentInt(3,argc,argv,"-send_again",0);
 	config->active = 0;
 	return 0;
@@ -93,6 +93,8 @@ typedef struct TaskManage{
 	Config *cfg;
 	uv_work_t req;
 	uv_threadpool_t * pool;
+	int count;
+	int id;
 }TaskManage;
 
 typedef struct Task{
@@ -252,7 +254,9 @@ void create_work(uv_work_t* req)
 		atomic_inc(task->cfg->active);
 	}else{
 		VLOGE("ConnectSocket result:%d",sock);
+		task->count++;
 	}
+	
 }
 
 void create_done(uv_work_t* req, int status)
@@ -268,6 +272,10 @@ void create_done(uv_work_t* req, int status)
 		VASSERT(ret == 0);
 	}else{
 		VLOGD("task over.%d",atomic_read(task->cfg->active));
+	}
+	if(task->count > 1000)
+	{
+		VLOGD("%d current active:%d",task->id,atomic_read(task->cfg->active));
 	}
 }
 
@@ -300,6 +308,8 @@ int main(int argc, char* argv[])
 	for(int i = 0 ; i < count;i++)
 	{
 		TaskManage * task = &tasks[i];
+		task->count = 0;
+		task->id = i;
 		task->cfg = &cfg;
 		task->pool = pool;
 		uv_queue_work(task->pool,&task->req,create_work,create_done);
