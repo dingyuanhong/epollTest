@@ -16,7 +16,7 @@
 	else VLOGE("(%d) %s", errorno, errmsg);  \
 	if (buf) LocalFree(buf); \
 	*((char*)NULL) = 0xff; \
-	abort(); \
+	VABORT(); \
 }	\
 
 

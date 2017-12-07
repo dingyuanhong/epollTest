@@ -5,7 +5,7 @@
 static QUEUE exit_message;
 static void uv__cancelled(struct uv__work* w) {
 	VLOGE("uv__cancelled runned.");
-	abort();
+	VABORT();
 }
 
 int uv_async_done(uv_async_event_t* handle) {
@@ -209,7 +209,7 @@ static void init_once(void* param) {
 	if (uv_thread_create(pool->threads + i, worker, pool))
 	{
 		VLOGE("uv_thread_create errno:%d.",errno);
-		abort();
+		VABORT();
 	}
 
 	VLOGI("init nthreads:%d,%p",pool->nthreads,pool->threads);
